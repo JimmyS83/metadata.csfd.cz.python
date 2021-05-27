@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<settings>
+	<category label="$LOCALIZE[128]">
+		<setting label="30000" type="bool" id="fanart" default="true"/>
+		<setting label="30001" type="bool" id="tmdbfanart" default="true" enable="eq(-1,true)"/>
+	</category>
+</settings>
