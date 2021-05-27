@@ -1,3 +1,4 @@
+# coding: utf-8
 from . import api_utils
 import xbmc
 import re
@@ -44,14 +45,15 @@ SEARCH_RESULT_REGEX = re.compile(r'film-title-nooverflow">.*?<a href="/(film/[^"
 
 CSFD_CZTITLE_REGEX = re.compile(r'<h1[^>]*>([^<]*)<')
 CSFD_ORIGINALTITLE_REGEX = re.compile(r'class="flag".*?>([^<]*)<')
-CSFD_PLOT_REGEX = re.compile(r'body--plots">[^>]*>[^<]*<p>([^<]*)')
+CSFD_PLOT_REGEX = re.compile(r'plot-full.*<p>(.*)<em class="span-more-small">', re.DOTALL)
 CSFD_THUMB_REGEX = re.compile(r'image\.pmgstatic\.com.*posters/([^ ]*)')
 CSFD_RUNTIME_REGEX = re.compile(r', (\d*) min')
 CSFD_DIRECTOR_REGEX = re.compile(r'<h4>Re.ie[^>]*>[^>]*>[^>]*>([^<]*)')
 CSFD_RATING_REGEX = re.compile(r'<div class="rating-average rating-average-withtabs">[^0-9]*([0-9]*)%')
 CSFD_VOTES_REGEX = re.compile(r'Hodnocen.<span class="counter">\(([^\)]*)\)')
-CSFD_CAST1_REGEX = re.compile(r'<h4>Hraj.[^>]*>[^>]*>(.*)<span class="more-member-1', re.DOTALL)
-CSFD_CAST2_REGEX = re.compile(r'<a href=".[^>]*>([^<]*)</a>')
+CSFD_CAST1_REGEX = re.compile(r'<h4>Hraj.[^>]*>[^>]*>(.*)<h4>Produkce', re.DOTALL)
+CSFD_CAST2_REGEX = re.compile(r'<a href="/tvurc[^>]*>([^<]*)</a>')
+CSFD_CAST_LIMIT = 8
 CSFD_YEAR_REGEX = re.compile(r'<span itemprop="dateCreated"[^>]*>([^<]*)<')
 CSFD_GENRE_REGEX = re.compile(r'<div class="genres">([^<]*)')
 CSFD_COUNTRY_REGEX = re.compile(r'<div class="origin">([^,]*),')
@@ -77,7 +79,7 @@ def get_tmdb_fanart(title, year=None):
     api_utils.set_headers(dict(HEADERS_TMDB))  # MAYBE NOT NEEDED
     response = api_utils.load_info(TMDB_SEARCH_URL, params=params)
 
-    if 'error' in response or response['results'][0]['backdrop_path'] is None:
+    if 'error' in response or response['total_results'] == 0 or response['results'][0]['backdrop_path'] is None:
         return False
     
     fanart = [{
@@ -115,7 +117,9 @@ def get_movie(url, settings):
     if (match): info['originaltitle'] = match[0].strip()
 
     match = CSFD_PLOT_REGEX.findall(response)
-    if (match): info['plot'] = match[0].strip()
+    if (match): 
+        plot = match[0].strip()
+        info['plot'] = re.sub(r'<[^>]*>', '', plot, flags=re.MULTILINE)
 
     match = CSFD_THUMB_REGEX.findall(response)
     if (match):
@@ -132,7 +136,7 @@ def get_movie(url, settings):
     if (match): 
         match = CSFD_CAST2_REGEX.findall(match[0].strip())
         info['cast'] = [] 
-        for actor in match:
+        for actor in match[:CSFD_CAST_LIMIT]:
             info['cast'].append(actor)
     
     match = CSFD_RATING_REGEX.findall(response)
