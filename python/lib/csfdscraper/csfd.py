@@ -47,8 +47,11 @@ CSFD_ORIGINALTITLE_REGEX = re.compile(r'class="flag".*?>([^<]*)<')
 CSFD_PLOT_REGEX = re.compile(r'body--plots">[^>]*>[^<]*<p>([^<]*)')
 CSFD_THUMB_REGEX = re.compile(r'image\.pmgstatic\.com.*posters/([^ ]*)')
 CSFD_RUNTIME_REGEX = re.compile(r', (\d*) min')
+CSFD_DIRECTOR_REGEX = re.compile(r'<h4>Re.ie[^>]*>[^>]*>[^>]*>([^<]*)')
 CSFD_RATING_REGEX = re.compile(r'<div class="rating-average rating-average-withtabs">[^0-9]*([0-9]*)%')
 CSFD_VOTES_REGEX = re.compile(r'Hodnocen.<span class="counter">\(([^\)]*)\)')
+CSFD_CAST1_REGEX = re.compile(r'<h4>Hraj.[^>]*>[^>]*>(.*)<span class="more-member-1', re.DOTALL)
+CSFD_CAST2_REGEX = re.compile(r'<a href=".[^>]*>([^<]*)</a>')
 CSFD_YEAR_REGEX = re.compile(r'<span itemprop="dateCreated"[^>]*>([^<]*)<')
 CSFD_GENRE_REGEX = re.compile(r'<div class="genres">([^<]*)')
 CSFD_COUNTRY_REGEX = re.compile(r'<div class="origin">([^,]*),')
@@ -121,6 +124,16 @@ def get_movie(url, settings):
     
     match = CSFD_RUNTIME_REGEX.findall(response)
     if (match): info['duration'] = int(match[0])*60
+    
+    match = CSFD_DIRECTOR_REGEX.findall(response)
+    if (match): info['director'] = match[0].split(", ")
+    
+    match = CSFD_CAST1_REGEX.findall(response)
+    if (match): 
+        match = CSFD_CAST2_REGEX.findall(match[0].strip())
+        info['cast'] = [] 
+        for actor in match:
+            info['cast'].append(actor)
     
     match = CSFD_RATING_REGEX.findall(response)
     if (match): rating = match[0]

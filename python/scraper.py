@@ -112,7 +112,7 @@ def run():
             search_for_movie(params["title"], params.get("year"), params['handle'], settings)
         elif action == 'getdetails' and 'url' in params:
             enddir = not get_details(parse_lookup_string(params["url"]), params['handle'], settings)
-            asd  # BREAK
+            #BREAK
         elif action == 'NfoUrl' and 'nfo' in params:
             find_uniqueids_in_nfo(params["nfo"], params['handle'])
         else:
