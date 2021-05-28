@@ -45,7 +45,7 @@ SEARCH_RESULT_REGEX = re.compile(r'film-title-nooverflow">.*?<a href="/(film/[^"
 
 CSFD_CZTITLE_REGEX = re.compile(r'<h1[^>]*>([^<]*)<')
 CSFD_ORIGINALTITLE_REGEX = re.compile(r'class="flag".*?>([^<]*)<')
-CSFD_PLOT_REGEX = re.compile(r'plot-full.*<p>(.*)<em class="span-more-small">', re.DOTALL)
+CSFD_PLOT_REGEX = re.compile(r'plot-full.*\s*<p>\s*(.*)')
 CSFD_THUMB_REGEX = re.compile(r'image\.pmgstatic\.com.*posters/([^ ]*\.jpg)')
 CSFD_RUNTIME_REGEX = re.compile(r', (\d*) min')
 CSFD_DIRECTOR_REGEX = re.compile(r'<h4>Re.ie[^>]*>[^>]*>[^>]*>([^<]*)')
