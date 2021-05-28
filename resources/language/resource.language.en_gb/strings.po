@@ -24,3 +24,7 @@ msgctxt "#30001"
 msgid "Use TMDB Fanart"
 msgstr ""
 
+msgctxt "#30002"
+msgid "Use TMDB Poster"
+msgstr ""
+

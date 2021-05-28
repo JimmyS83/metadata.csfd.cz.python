@@ -64,11 +64,10 @@ TMDB_PARAMS = {'api_key': 'f090bb54758cabf231fb605d3e3e0468'}
 TMDB_URL = 'https://api.themoviedb.org/3/{}'
 TMDB_SEARCH_URL = TMDB_URL.format('search/movie')
 TMDB_MOVIE_URL = TMDB_URL.format('movie/{}')
-THUMB_FANART_PREVIEW = 'https://image.tmdb.org/t/p/w500/{}'
-THUMB_FANART_ORIGINAL = 'https://image.tmdb.org/t/p/original/{}'
+TMDB_IMAGE_PREVIEW = 'https://image.tmdb.org/t/p/w500{}'
+TMDB_IMAGE_ORIGINAL = 'https://image.tmdb.org/t/p/original{}'
 
-def get_tmdb_fanart(title, year=None):
-        
+def get_tmdb_info(title, year=None):
     params = TMDB_PARAMS.copy()
     params['query'] = title.encode('utf-8')
     if year is not None:
@@ -79,15 +78,10 @@ def get_tmdb_fanart(title, year=None):
     api_utils.set_headers(dict(HEADERS_TMDB))  # MAYBE NOT NEEDED
     response = api_utils.load_info(TMDB_SEARCH_URL, params=params)
 
-    if 'error' in response or response['total_results'] == 0 or response['results'][0]['backdrop_path'] is None:
+    if 'error' in response or response['total_results'] == 0:
         return False
-    
-    fanart = [{
-            'original': THUMB_FANART_ORIGINAL.format(response['results'][0]['backdrop_path']),
-            'preview': THUMB_FANART_PREVIEW.format(response['results'][0]['backdrop_path'])
-    }]
 
-    return fanart
+    return {'poster': response['results'][0]['poster_path'], 'fanart': response['results'][0]['backdrop_path']}
 
 def search_movie(query, year=None):
     #xbmc.log('using title: %s to find movie' % query, xbmc.LOGDEBUG)
@@ -121,11 +115,6 @@ def get_movie(url, settings):
         plot = match[0].strip()
         info['plot'] = re.sub(r'<[^>]*>', '', plot, flags=re.MULTILINE)
 
-    match = CSFD_THUMB_REGEX.findall(response)
-    if (match):
-        poster_original = THUMB_URL.format(match[0])
-        poster_preview = THUMB_PREVIEW_URL.format(match[0])        
-    
     match = CSFD_RUNTIME_REGEX.findall(response)
     if (match): info['duration'] = int(match[0])*60
     
@@ -154,11 +143,20 @@ def get_movie(url, settings):
     match = CSFD_COUNTRY_REGEX.findall(response)
     if (match): info['country'] = match[0].split(" / ")
     
-    if settings.getSettingBool('tmdbfanart'): 
-        fanart = get_tmdb_fanart(info['title'], info['year'])
+    if settings.getSettingBool('tmdbfanart') or settings.getSettingBool('tmdbposter'): 
+        tmdb_info = get_tmdb_info(info['title'], info['year'])
+        
+        if tmdb_info:
+            if tmdb_info['poster'] is not None:
+                poster = {'original' : TMDB_IMAGE_ORIGINAL.format(tmdb_info['poster']), 'preview' : TMDB_IMAGE_PREVIEW.format(tmdb_info['poster'])}
+            if tmdb_info['fanart'] is not None:
+                fanart = [{'original' : TMDB_IMAGE_ORIGINAL.format(tmdb_info['fanart']), 'preview' : TMDB_IMAGE_PREVIEW.format(tmdb_info['fanart'])}]
+
+    if not settings.getSettingBool('tmdbposter') or not tmdb_info or tmdb_info['poster'] is None:  # TMDB poster OFF or fallback 
+        match = CSFD_THUMB_REGEX.findall(response)
+        if (match): poster = {'original' : THUMB_URL.format(match[0]), 'preview' : THUMB_PREVIEW_URL.format(match[0])}        
     
-    
-    if not settings.getSettingBool('tmdbfanart') or not fanart: 
+    if not settings.getSettingBool('tmdbfanart') or not tmdb_info or tmdb_info['fanart'] is None:  # TMDB fanart OFF or fallback
         match = CSFD_GALLERYURL_REGEX.findall(response)
         if (match): gallery_url = GALLERY_URL.format(match[0])
         response = api_utils.load_info(gallery_url, resp_type='text')
@@ -175,7 +173,7 @@ def get_movie(url, settings):
                 }) 
     
     rating = {'rating': float(rating)/10, 'votes': int(votes.replace(u'\xa0', u''))}
-    available_art = {'poster': {'original' : poster_original, 'preview' : poster_preview}, 'fanart': fanart}
+    available_art = {'poster': poster, 'fanart': fanart}
     
     return {'info': info, 'ratings': rating, 'available_art': available_art}
 
