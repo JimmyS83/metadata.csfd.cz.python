@@ -144,7 +144,7 @@ def get_movie(url, settings):
     if (match): info['country'] = match[0].split(" / ")
     
     if settings.getSettingBool('tmdbfanart') or settings.getSettingBool('tmdbposter'): 
-        tmdb_info = get_tmdb_info(info['title'], info['year'])
+        tmdb_info = get_tmdb_info(info['originaltitle'], info['year'])
         
         if tmdb_info:
             if tmdb_info['poster'] is not None:
