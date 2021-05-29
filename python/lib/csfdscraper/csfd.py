@@ -41,6 +41,7 @@ FANART_URL = 'https://image.pmgstatic.com/files/images/film/photos/{}.jpg'
 FANART_PREVIEW_URL = 'https://image.pmgstatic.com/cache/resized/w360/files/images/film/photos/{}.jpg'
 
 SEARCH_URL = BASE_URL.format('hledat/')
+SEARCH_RESULT_MOVIES_REGEX =  re.compile(r'<h2>Filmy(.*)<h2>Seri.ly', re.DOTALL)
 SEARCH_RESULT_REGEX = re.compile(r'film-title-nooverflow">.*?<a href="/(film/[^"]*)" class="film-title-name">([^<]*)</a>.*?<span class="info">\(([0-9]*)\)')
 
 CSFD_CZTITLE_REGEX = re.compile(r'<h1[^>]*>([^<]*)<')
@@ -90,8 +91,9 @@ def search_movie(query, year=None):
     if year is not None:
         params['q'] = "{0} {1}".format(params['q'], str(year))
     response = api_utils.load_info(SEARCH_URL, params=params, resp_type='text')
-    result = re.findall(SEARCH_RESULT_REGEX, response)
-    
+    response_movies = re.findall(SEARCH_RESULT_MOVIES_REGEX, response)
+    result = re.findall(SEARCH_RESULT_REGEX, response_movies[0])
+        
     result_fixed = []
     for row in result:
         result_fixed.append((BASE_URL.format(row[0]).decode('utf-8'), row[1], row[2]))
