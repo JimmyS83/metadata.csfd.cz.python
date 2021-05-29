@@ -109,6 +109,7 @@ def get_movie(url, settings):
 
     match = CSFD_ORIGINALTITLE_REGEX.findall(response)
     if (match): info['originaltitle'] = match[0].strip()
+    else: info['originaltitle'] = info['title'] # fallback to czech title
 
     match = CSFD_PLOT_REGEX.findall(response)
     if (match): 
