@@ -81,12 +81,12 @@ def get_details(url, handle, settings):
 
     details = configure_csfd_artwork(details, settings)
     
-    #xbmc.log('\n\ndetails:{}'.format(details), xbmc.LOGDEBUG)
+    #xbmc.log('\n\ndetails:{}'.format(details), xbmc.LOGDEBUG) # debug
 
     listitem = xbmcgui.ListItem(details['info']['title'], offscreen=True)
     listitem.setInfo('video', details['info'])
     add_artworks(listitem, details['available_art'])
-    listitem.setRating('csfd', details['ratings']['rating'], details['ratings']['votes'], True)
+    if details['ratings']['rating']: listitem.setRating('csfd', details['ratings']['rating'], details['ratings']['votes'], True)
     
 
     xbmcplugin.setResolvedUrl(handle=handle, succeeded=True, listitem=listitem)

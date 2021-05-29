@@ -172,7 +172,8 @@ def get_movie(url, settings):
                     'preview': fanart_preview
                 }) 
     
-    rating = {'rating': float(rating)/10, 'votes': int(votes.replace(u'\xa0', u''))}
+    if rating: rating = {'rating': float(rating)/10, 'votes': int(votes.replace(u'\xa0', u''))}
+    else : rating = {'rating': False, 'votes': int(votes.replace(u'\xa0', u''))}
     available_art = {'poster': poster, 'fanart': fanart}
     
     return {'info': info, 'ratings': rating, 'available_art': available_art}
