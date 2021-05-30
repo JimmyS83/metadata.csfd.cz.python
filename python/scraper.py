@@ -7,7 +7,7 @@ import xbmcgui
 import xbmcplugin
 
 from lib.csfdscraper.csfd import CSFDMovieScraper
-from scraper_datahelper import get_params
+from scraper_datahelper import get_params, find_uniqueids_in_text
 from scraper_config import PathSpecificSettings, configure_csfd_artwork
 
 ADDON_SETTINGS = xbmcaddon.Addon()
@@ -72,7 +72,6 @@ def add_artworks(listitem, artworks):
     #xbmc.log('\n\n\n fanart_to_set:{} '.format(fanart_to_set), xbmc.LOGDEBUG)
 
 def get_details(url, handle, settings):
-    
     if not url:
         return False
     details = get_csfd_scraper(settings).get_details(url)
@@ -80,8 +79,7 @@ def get_details(url, handle, settings):
         return False
 
     details = configure_csfd_artwork(details, settings)
-    
-    #xbmc.log('\n\ndetails:{}'.format(details), xbmc.LOGDEBUG) # debug
+    #xbmc.log('\n Details:{}'.format(details), xbmc.LOGDEBUG) # debug
 
     listitem = xbmcgui.ListItem(details['info']['title'], offscreen=True)
     listitem.setInfo('video', details['info'])
@@ -91,6 +89,12 @@ def get_details(url, handle, settings):
 
     xbmcplugin.setResolvedUrl(handle=handle, succeeded=True, listitem=listitem)
     return True
+
+def find_uniqueids_in_nfo(nfo, handle):
+    uniqueids = find_uniqueids_in_text(nfo)
+    if uniqueids:
+        listitem = xbmcgui.ListItem(offscreen=True)
+        xbmcplugin.addDirectoryItem(handle=handle, url=build_lookup_string(uniqueids), listitem=listitem, isFolder=True)
 
 def build_lookup_string(uniqueids):
     return json.dumps(uniqueids)
@@ -114,12 +118,15 @@ def run():
         elif action == 'getdetails' and 'url' in params:
             enddir = not get_details(parse_lookup_string(params["url"]), params['handle'], settings)
             #BREAK
+        elif action == 'NfoUrl' and 'nfo' in params:
+            find_uniqueids_in_nfo(params["nfo"], params['handle'])
         else:
             log("unhandled action: " + action, xbmc.LOGWARNING)
     else:
         log("No action in 'params' to act on", xbmc.LOGWARNING)
     if enddir:
         xbmcplugin.endOfDirectory(params['handle'])
+        
 
 if __name__ == '__main__':
     run()

@@ -13,3 +13,19 @@ def get_params(argv):
     result.update(parse_qsl(argv[1].lstrip('?')))
     return result
 
+def find_uniqueids_in_text(input_text):
+    result = {}
+    res = re.search(r'(csfd.cz/film/)([0-9]+)', input_text)
+    if (res):
+        result['csfd'] = res.group(2)
+    res = re.search(r'(themoviedb.org/movie/)([0-9]+)', input_text)
+    if (res):
+        result['tmdb'] = res.group(2)
+    res = re.search(r'imdb....?/title/tt([0-9]+)', input_text)
+    if (res):
+        result['imdb'] = 'tt' + res.group(1)
+    else:
+        res = re.search(r'imdb....?/Title\?t{0,2}([0-9]+)', input_text)
+        if (res):
+            result['imdb'] = 'tt' + res.group(1)
+    return result
