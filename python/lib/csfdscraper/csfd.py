@@ -181,13 +181,13 @@ def get_movie(url, settings):
         if (match): poster = {'original' : THUMB_URL.format(match[0]), 'preview' : THUMB_PREVIEW_URL.format(match[0])}        
     
     if not settings.getSettingBool('tmdbfanart') or not tmdb_info or tmdb_info['fanart'] is None:  # TMDB fanart OFF or fallback
+        fanart = []
         match = CSFD_GALLERYURL_REGEX.findall(response)
         if (match): gallery_url = GALLERY_URL.format(match[0])
         response = api_utils.load_info(gallery_url, resp_type='text')
         match = CSFD_FANART_REGEX.findall(response)
         if (match):
             match_fixed = [i for n, i in enumerate(match) if i not in match[:n]]  # remove duplicites
-            fanart = [] 
             for image in match_fixed:
                 fanart_original = FANART_URL.format(image)
                 fanart_preview = FANART_PREVIEW_URL.format(image)
