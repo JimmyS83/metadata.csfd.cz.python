@@ -18,6 +18,8 @@ def find_uniqueids_in_text(input_text):
     res = re.search(r'(csfd.cz/film/)([0-9]+)', input_text)
     if (res):
         result['csfd'] = res.group(2)
+    else:
+        return False
     res = re.search(r'(themoviedb.org/movie/)([0-9]+)', input_text)
     if (res):
         result['tmdb'] = res.group(2)
