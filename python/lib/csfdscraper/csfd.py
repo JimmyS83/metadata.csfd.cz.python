@@ -38,8 +38,8 @@ CSFD_MOVIE_URL = BASE_URL.format('film/{}')
 GALLERY_URL = 'https://www.csfd.cz/film/{}/galerie/'
 THUMB_URL = 'https://image.pmgstatic.com/files/images/film/posters/{}'
 THUMB_PREVIEW_URL = 'https://image.pmgstatic.com/cache/resized/w420/files/images/film/posters/{}'
-FANART_URL = 'https://image.pmgstatic.com/files/images/film/photos/{}.jpg'
-FANART_PREVIEW_URL = 'https://image.pmgstatic.com/cache/resized/w360/files/images/film/photos/{}.jpg'
+FANART_URL = 'https://image.pmgstatic.com/files/images/film/photos/{}'
+FANART_PREVIEW_URL = 'https://image.pmgstatic.com/cache/resized/w360/files/images/film/photos/{}'
 
 SEARCH_URL = BASE_URL.format('hledat/')
 SEARCH_RESULT_MOVIES_REGEX =  re.compile(r'<h2>Filmy(.*)<h2>Seri.ly', re.DOTALL)
@@ -48,7 +48,7 @@ SEARCH_RESULT_REGEX = re.compile(r'film-title-nooverflow">.*?<a href="/(film/[^"
 CSFD_CZTITLE_REGEX = re.compile(r'<h1[^>]*>([^<]*)<')
 CSFD_ORIGINALTITLE_REGEX = re.compile(r'class="flag".*?>([^<]*)<')
 CSFD_PLOT_REGEX = re.compile(r'plot-full.*\s*<p>\s*(.*)')
-CSFD_THUMB_REGEX = re.compile(r'image\.pmgstatic\.com.*posters/([^ ]*\.jpg)')
+CSFD_THUMB_REGEX = re.compile(r'image\.pmgstatic\.com.*posters/([^ ]*\....)')
 CSFD_RUNTIME_REGEX = re.compile(r', (\d*) min')
 CSFD_DIRECTOR_REGEX = re.compile(r'<h4>Re.ie[^>]*>[^>]*>[^>]*>([^<]*)')
 CSFD_RATING_REGEX = re.compile(r'<div class=\"rating-average[^>]*>[^0-9]*([0-9]*)%')
@@ -60,7 +60,7 @@ CSFD_YEAR_REGEX = re.compile(r'<span itemprop="dateCreated"[^>]*>([^<]*)<')
 CSFD_GENRE_REGEX = re.compile(r'<div class="genres">([^<]*)')
 CSFD_COUNTRY_REGEX = re.compile(r'<div class="origin">([^,]*),')
 CSFD_GALLERYURL_REGEX = re.compile(r'\/film\/([^\/]*)\/galerie')
-CSFD_FANART_REGEX = re.compile(r'srcset=.*\/photos\/([^ ]*).jpg')
+CSFD_FANART_REGEX = re.compile(r'srcset=.*\/photos\/([^ ]*\....)')
 
 TMDB_PARAMS = {'api_key': 'f090bb54758cabf231fb605d3e3e0468'}
 TMDB_URL = 'https://api.themoviedb.org/3/{}'
@@ -179,6 +179,7 @@ def get_movie(url, settings):
 
     if not settings.getSettingBool('tmdbposter') or not tmdb_info or tmdb_info['poster'] is None:  # TMDB poster OFF or fallback 
         match = CSFD_THUMB_REGEX.findall(response)
+        poster = {'original' : '', 'preview' : ''}
         if (match): poster = {'original' : THUMB_URL.format(match[0]), 'preview' : THUMB_PREVIEW_URL.format(match[0])}        
     
     if not settings.getSettingBool('tmdbfanart') or not tmdb_info or tmdb_info['fanart'] is None:  # TMDB fanart OFF or fallback
