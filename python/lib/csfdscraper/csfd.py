@@ -46,7 +46,7 @@ SEARCH_RESULT_MOVIES_REGEX =  re.compile(r'<h2>Filmy(.*)<h2>Seri.ly', re.DOTALL)
 SEARCH_RESULT_REGEX = re.compile(r'film-title-nooverflow">.*?<a href="/(film/[^"]*)" class="film-title-name">([^<]*)</a>.*?<span class="info">\(([0-9]*)\)')
 
 CSFD_CZTITLE_REGEX = re.compile(r'<h1[^>]*>([^<]*)<')
-CSFD_ORIGINALTITLE_REGEX = re.compile(r'class="flag".*?>([^<]*)<')
+CSFD_ORIGINALTITLE_REGEX = re.compile(r'class="flag".*?>([^<]*)(.*)<')
 CSFD_PLOT_REGEX = re.compile(r'plot-full.*\s*<p>\s*(.*)')
 CSFD_THUMB_REGEX = re.compile(r'image\.pmgstatic\.com.*posters/([^ ]*\....)')
 CSFD_RUNTIME_REGEX = re.compile(r', (\d*) min')
@@ -131,7 +131,11 @@ def get_movie(url, settings):
     if (match): info['title'] = match[0].strip()
 
     match = CSFD_ORIGINALTITLE_REGEX.findall(response)
-    if (match): info['originaltitle'] = match[0].strip()
+    if (match):
+        for x in match:
+            if not re.search(r'pracovn', x[1]): 
+                info['originaltitle'] = x[0].strip()
+                break
     else: info['originaltitle'] = info['title'] # fallback to czech title
     if info['originaltitle'] == '': info['originaltitle'] = info['title'] # fallback when scrapper returns empty string
 
