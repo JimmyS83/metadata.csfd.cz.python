@@ -71,6 +71,12 @@ TMDB_IMAGE_ORIGINAL = 'https://image.tmdb.org/t/p/original{}'
 
 IMDB_MOVIE_URL = 'https://www.imdb.com/title/{}'
 
+def html_strip(input):
+    replaces = ( ('&amp;', '&'), )
+    for pattern, repl in replaces:
+        input = re.sub(pattern, repl, input)
+    return input
+
 def get_tmdb_info(title, year=None, uniqueid=None):
     params = TMDB_PARAMS.copy()
     
@@ -128,7 +134,9 @@ def get_movie(url, settings):
     info = {}
     
     match = CSFD_CZTITLE_REGEX.findall(response)
-    if (match): info['title'] = match[0].strip()
+    if (match): 
+        info['title'] = match[0].strip()
+        info['title'] = html_strip(info['title'])
 
     match = CSFD_ORIGINALTITLE_REGEX.findall(response)
     if (match):
@@ -138,6 +146,9 @@ def get_movie(url, settings):
                 break
     else: info['originaltitle'] = info['title'] # fallback to czech title
     if info['originaltitle'] == '': info['originaltitle'] = info['title'] # fallback when scrapper returns empty string
+    
+    info['originaltitle'] = html_strip(info['originaltitle'])
+    
 
     match = CSFD_PLOT_REGEX.findall(response)
     if (match): 
