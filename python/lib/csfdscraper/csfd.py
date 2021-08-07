@@ -145,9 +145,11 @@ def get_movie(url, settings):
                 info['originaltitle'] = x[0].strip()
                 break
     else: info['originaltitle'] = info['title'] # fallback to czech title
-    if info['originaltitle'] == '': info['originaltitle'] = info['title'] # fallback when scrapper returns empty string
-    
-    info['originaltitle'] = html_strip(info['originaltitle'])
+    try:
+        if info['originaltitle'] == '': info['originaltitle'] = info['title'] # fallback when scrapper returns empty string
+        info['originaltitle'] = html_strip(info['originaltitle'])
+    except KeyError:
+        info['originaltitle'] = info['title'] # fallback when scrapper returns empty string  
     
 
     match = CSFD_PLOT_REGEX.findall(response)
