@@ -100,7 +100,7 @@ def get_tmdb_info(title, year=None, uniqueid=None):
         if 'error' in response or response['total_results'] == 0:
             return False
 
-        return {'poster': response['results'][0]['poster_path'], 'fanart': response['results'][0]['backdrop_path']}
+        return {'poster': response['results'][0]['poster_path'], 'fanart': response['results'][0]['backdrop_path'], 'rating': response['results'][0]['vote_average'],'votes': response['results'][0]['vote_count']}
 
 def search_movie(query, year=None):
     #xbmc.log('using title: %s to find movie' % query, xbmc.LOGDEBUG)
@@ -185,7 +185,7 @@ def get_movie(url, settings):
     match = CSFD_COUNTRY_REGEX.findall(response)
     if (match): info['country'] = match[0].split(" / ")
     
-    if settings.getSettingBool('tmdbfanart') or settings.getSettingBool('tmdbposter'): 
+    if settings.getSettingBool('tmdbfanart') or settings.getSettingBool('tmdbposter') or settings.getSettingBool('tmdbvotes'): 
         tmdb_info = get_tmdb_info(info['originaltitle'], info['year'], uniqueids['tmdb'])
         
         if tmdb_info:
@@ -215,7 +215,10 @@ def get_movie(url, settings):
                     'preview': fanart_preview
                 }) 
     
-    if rating: rating = {'rating': float(rating)/10, 'votes': int(votes.replace(u'\xa0', u''))}
+    if rating: 
+        rating = {'rating': float(rating)/10, 'votes': int(votes.replace(u'\xa0', u''))}
+        if settings.getSettingBool('tmdbvotes') and tmdb_info and tmdb_info['rating'] is not None:
+            rating = {'rating': float(tmdb_info['rating']), 'votes': int(tmdb_info['votes'])}
     else : rating = {'rating': False, 'votes': int(votes.replace(u'\xa0', u''))}
     available_art = {'poster': poster, 'fanart': fanart}
     

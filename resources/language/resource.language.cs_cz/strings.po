@@ -24,6 +24,10 @@ msgctxt "#30001"
 msgid "Use TMDB Fanart"
 msgstr "Použít Fanart z TMDB"
 
+msgctxt "#30003"
+msgid "Use TMDB Votes"
+msgstr "Použít Hodnocení z TMDB"
+
 msgctxt "#30002"
 msgid "Use TMDB Poster"
 msgstr "Použít Poster z TMDB"
