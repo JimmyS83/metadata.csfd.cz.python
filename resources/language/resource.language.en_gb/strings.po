@@ -29,6 +29,6 @@ msgid "Use TMDB Poster"
 msgstr ""
 
 msgctxt "#30003"
-msgid "Use TMDB Votes"
+msgid "Use Votes from"
 msgstr ""
 

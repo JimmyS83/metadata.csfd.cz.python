@@ -4,6 +4,6 @@
 		<setting label="30000" type="bool" id="fanart" default="true"/>
 		<setting label="30001" type="bool" id="tmdbfanart" default="true" enable="eq(-1,true)"/>
 		<setting label="30002" type="bool" id="tmdbposter" default="false"/>
-		<setting label="30003" type="bool" id="tmdbvotes" default="false"/>
+		<setting label="30003" type="labelenum" id="rating" values="CSFD|TMDB|IMDB"/>
 	</category>
 </settings>

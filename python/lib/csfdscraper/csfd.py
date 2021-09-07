@@ -1,4 +1,5 @@
 # coding: utf-8
+import json
 from . import api_utils
 import xbmc
 import re
@@ -70,13 +71,54 @@ TMDB_MOVIE_URL = TMDB_URL.format('movie/{}')
 TMDB_IMAGE_PREVIEW = 'https://image.tmdb.org/t/p/w500{}'
 TMDB_IMAGE_ORIGINAL = 'https://image.tmdb.org/t/p/original{}'
 
-IMDB_MOVIE_URL = 'https://www.imdb.com/title/{}'
+IMDB_URL = 'https://www.imdb.com/{}'
+IMDB_SEARCH_URL = IMDB_URL.format('find')
+IMDB_SEARCH_RESULT_MOVIES_REGEX =  re.compile(r'<table class=\"findList\">.*</table>', re.DOTALL)
+IMDB_SEARCH_RESULT_REGEX = re.compile(r'title/(tt[0-9]+)')
+IMDB_MOVIE_URL = IMDB_URL.format('title/{}')
+IMDB_LDJSON_REGEX = re.compile(r'<script type="application/ld\+json">(.*?)</script>', re.DOTALL)
+IMDB_RATING_REGEX = re.compile(r'AggregateRating\".*?ratingValue\":(.*?)}')
+IMDB_VOTES_REGEX = re.compile(r'AggregateRating\".*?ratingCount\":(.*?),')
 
 def html_strip(input):
     replaces = ( ('&amp;', '&'), )
     for pattern, repl in replaces:
         input = re.sub(pattern, repl, input)
     return input
+    
+def get_imdb_info(title, year=None, uniqueid=None):
+    #xbmc.log('\n IMDB info req. {} {} {}'.format(title, year, uniqueid), xbmc.LOGDEBUG)
+    if uniqueid is not None: # direct lookup from .nfo
+        response_movie = api_utils.load_info(uniqueid, resp_type='text')
+    
+    else:  # Search for movie fulltext
+        params = {}
+        params['q'] = title
+        if year is not None:
+            params['q'] = "{0} {1}".format(params['q'], str(year))
+
+        response = api_utils.load_info(IMDB_SEARCH_URL, params=params, resp_type='text')
+        #xbmc.log('\n IMDB search response {}.'.format(response.encode('utf-8')), xbmc.LOGDEBUG)
+        response_movies = re.findall(IMDB_SEARCH_RESULT_MOVIES_REGEX, response)
+        imdbid = re.findall(IMDB_SEARCH_RESULT_REGEX, response_movies[0])[0]
+        imdb_movie = IMDB_MOVIE_URL.format(imdbid)
+        #xbmc.log('\n IMDB founded movie {}.'.format(imdb_movie), xbmc.LOGDEBUG)
+        response_movie = api_utils.load_info(imdb_movie, resp_type='text')
+
+    match = re.search(IMDB_LDJSON_REGEX, response_movie)
+    if not match:
+        return {'rating': None, 'votes': None}
+        
+    try:
+        ldjson = json.loads(match.group(1).replace('\n', ''))
+    except json.decoder.JSONDecodeError:
+        return {'rating': None, 'votes': None}
+
+    try:
+        aggregateRating = ldjson.get('aggregateRating', {})
+        return {'rating': aggregateRating.get('ratingValue'), 'votes': aggregateRating.get('ratingCount')}
+    except AttributeError:
+        return {'rating': None, 'votes': None}
 
 def get_tmdb_info(title, year=None, uniqueid=None):
     params = TMDB_PARAMS.copy()
@@ -223,9 +265,15 @@ def get_movie(url, settings):
     
     if rating: 
         rating = {'rating': float(rating)/10, 'votes': int(votes.replace(u'\xa0', u''))}
-        if settings.getSettingBool('tmdbvotes') and tmdb_info and tmdb_info['rating'] is not None:
-            rating = {'rating': float(tmdb_info['rating']), 'votes': int(tmdb_info['votes'])}
     else : rating = {'rating': False, 'votes': int(votes.replace(u'\xa0', u''))}
+    
+    if settings.getSettingString('rating')=='TMDB' and tmdb_info and tmdb_info['rating'] is not None:
+            rating = {'rating': float(tmdb_info['rating']), 'votes': int(tmdb_info['votes'])}
+    elif settings.getSettingString('rating')=='IMDB':    
+        imdb_info = get_imdb_info(info['originaltitle'], info['year'], uniqueids['imdb'])
+        if imdb_info and imdb_info['rating'] is not None:
+            rating = {'rating': float(imdb_info['rating']), 'votes': int(imdb_info['votes'])}
+    
     available_art = {'poster': poster, 'fanart': fanart}
     
     #xbmc.log('\n DETAILS :{}{}{}'.format(info, rating, available_art), xbmc.LOGDEBUG)
