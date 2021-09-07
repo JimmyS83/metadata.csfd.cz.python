@@ -159,9 +159,9 @@ def get_movie(url, settings):
         info['plot'] = re.sub(r'<[^>]*>', '', plot, flags=re.MULTILINE)
     else:   #fallback to first comment instead plot
         match = CSFD_COMMENT_REGEX.findall(response)
-        if (match): 
-            plot = match[0].strip()
-            info['plot'] = re.sub(r'<[^>]*>', '', plot, flags=re.MULTILINE)
+        if (match):
+            plot = re.sub(r'<[^>]*>', '', match[0].strip(), flags=re.MULTILINE)
+            info['plot'] = '{0}\n{1}'.format(u'KOMENTÁŘ NA ČSFD:'.encode('utf-8'), plot.encode('utf-8'))
 
     match = CSFD_RUNTIME_REGEX.findall(response)
     if (match): info['duration'] = int(match[0])*60
