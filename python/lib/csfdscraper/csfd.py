@@ -61,6 +61,7 @@ CSFD_GENRE_REGEX = re.compile(r'<div class="genres">([^<]*)')
 CSFD_COUNTRY_REGEX = re.compile(r'<div class="origin">([^,]*),')
 CSFD_GALLERYURL_REGEX = re.compile(r'\/film\/([^\/]*)\/galerie')
 CSFD_FANART_REGEX = re.compile(r'srcset=.*\/photos\/([^ ]*\....)')
+CSFD_COMMENT_REGEX = re.compile(r'icon-permalink[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>\s*([^<]*)', re.DOTALL)
 
 TMDB_PARAMS = {'api_key': 'f090bb54758cabf231fb605d3e3e0468'}
 TMDB_URL = 'https://api.themoviedb.org/3/{}'
@@ -156,6 +157,11 @@ def get_movie(url, settings):
     if (match): 
         plot = match[0].strip()
         info['plot'] = re.sub(r'<[^>]*>', '', plot, flags=re.MULTILINE)
+    else:   #fallback to first comment instead plot
+        match = CSFD_COMMENT_REGEX.findall(response)
+        if (match): 
+            plot = match[0].strip()
+            info['plot'] = re.sub(r'<[^>]*>', '', plot, flags=re.MULTILINE)
 
     match = CSFD_RUNTIME_REGEX.findall(response)
     if (match): info['duration'] = int(match[0])*60
