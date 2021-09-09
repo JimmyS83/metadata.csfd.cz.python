@@ -120,7 +120,7 @@ def get_imdb_info(title, year=None, uniqueid=None):
     except AttributeError:
         return {'rating': None, 'votes': None}
 
-def get_tmdb_info(title, year=None, uniqueid=None):
+def get_tmdb_info(title, year=None, uniqueid=None, settings=None):
     params = TMDB_PARAMS.copy()
     
     if uniqueid is not None: # direct lookup from .nfo
@@ -137,13 +137,26 @@ def get_tmdb_info(title, year=None, uniqueid=None):
             params['year'] = str(year)
         
         #xbmc.log('\n using movie query query {}{} to get TMDB fanart'.format(TMDB_SEARCH_URL, params), xbmc.LOGDEBUG)
+        
+        params['language'] = 'cs'
         api_utils.set_headers(dict(HEADERS_TMDB))  # MAYBE NOT NEEDED
         response = api_utils.load_info(TMDB_SEARCH_URL, params=params)
+        #xbmc.log('\n TMDB returns movie details {}'.format(response), xbmc.LOGDEBUG)
 
         if 'error' in response or response['total_results'] == 0:
             return False
+        
+        if not response['results'][0]['overview'] and settings.getSettingBool('tmdbenplot'):  # fallback to TMDB eng plot
+            params['language'] = None
+            
+            response_eng = api_utils.load_info(TMDB_SEARCH_URL, params=params)
+            if response_eng['results'][0]['overview']:
+                response['results'][0]['overview'] = response_eng['results'][0]['overview']
 
-        return {'poster': response['results'][0]['poster_path'], 'fanart': response['results'][0]['backdrop_path'], 'rating': response['results'][0]['vote_average'],'votes': response['results'][0]['vote_count']}
+            if 'error' in response or response['total_results'] == 0:
+                return False
+
+        return {'poster': response['results'][0]['poster_path'], 'fanart': response['results'][0]['backdrop_path'], 'rating': response['results'][0]['vote_average'],'votes': response['results'][0]['vote_count'], 'plot': response['results'][0]['overview']}
 
 def search_movie(query, year=None):
     #xbmc.log('using title: %s to find movie' % query, xbmc.LOGDEBUG)
@@ -199,11 +212,6 @@ def get_movie(url, settings):
     if (match): 
         plot = match[0].strip()
         info['plot'] = re.sub(r'<[^>]*>', '', plot, flags=re.MULTILINE)
-    else:   #fallback to first comment instead plot
-        match = CSFD_COMMENT_REGEX.findall(response)
-        if (match):
-            plot = re.sub(r'<[^>]*>', '', match[0].strip(), flags=re.MULTILINE)
-            info['plot'] = '{0}\n{1}'.format(u'KOMENTÁŘ NA ČSFD:'.encode('utf-8'), plot.encode('utf-8'))
 
     match = CSFD_RUNTIME_REGEX.findall(response)
     if (match): info['duration'] = int(match[0])*60
@@ -233,14 +241,23 @@ def get_movie(url, settings):
     match = CSFD_COUNTRY_REGEX.findall(response)
     if (match): info['country'] = match[0].split(" / ")
     
-    if settings.getSettingBool('tmdbfanart') or settings.getSettingBool('tmdbposter') or settings.getSettingBool('tmdbvotes'): 
-        tmdb_info = get_tmdb_info(info['originaltitle'], info['year'], uniqueids['tmdb'])
+    if settings.getSettingBool('tmdbfanart') or settings.getSettingBool('tmdbposter') or settings.getSettingString('rating')=='TMDB' or 'plot' not in info: 
+        tmdb_info = get_tmdb_info(info['originaltitle'], info['year'], uniqueids['tmdb'], settings)
+        #xbmc.log(' TMDB RESPONSE {}'.format(tmdb_info) , xbmc.LOGDEBUG)
         
         if tmdb_info:
             if tmdb_info['poster'] is not None:
                 poster = {'original' : TMDB_IMAGE_ORIGINAL.format(tmdb_info['poster']), 'preview' : TMDB_IMAGE_PREVIEW.format(tmdb_info['poster'])}
             if tmdb_info['fanart'] is not None:
                 fanart = [{'original' : TMDB_IMAGE_ORIGINAL.format(tmdb_info['fanart']), 'preview' : TMDB_IMAGE_PREVIEW.format(tmdb_info['fanart'])}]
+            if tmdb_info['plot']:
+                info['plot'] = tmdb_info['plot']
+                
+        if 'plot' not in info:   #fallback to first CSFD comment instead plot
+            match = CSFD_COMMENT_REGEX.findall(response)
+            if (match):
+                plot = re.sub(r'<[^>]*>', '', match[0].strip(), flags=re.MULTILINE)
+                info['plot'] = '{0}\n{1}'.format(u'KOMENTÁŘ NA ČSFD:'.encode('utf-8'), plot.encode('utf-8'))
 
     if not settings.getSettingBool('tmdbposter') or not tmdb_info or tmdb_info['poster'] is None:  # TMDB poster OFF or fallback 
         match = CSFD_THUMB_REGEX.findall(response)
@@ -250,18 +267,19 @@ def get_movie(url, settings):
     if not settings.getSettingBool('tmdbfanart') or not tmdb_info or tmdb_info['fanart'] is None:  # TMDB fanart OFF or fallback
         fanart = []
         match = CSFD_GALLERYURL_REGEX.findall(response)
-        if (match): gallery_url = GALLERY_URL.format(match[0])
-        response = api_utils.load_info(gallery_url, resp_type='text')
-        match = CSFD_FANART_REGEX.findall(response)
-        if (match):
-            match_fixed = [i for n, i in enumerate(match) if i not in match[:n]]  # remove duplicites
-            for image in match_fixed:
-                fanart_original = FANART_URL.format(image)
-                fanart_preview = FANART_PREVIEW_URL.format(image)
-                fanart.append({
-                    'original': fanart_original,
-                    'preview': fanart_preview
-                }) 
+        if (match): 
+            gallery_url = GALLERY_URL.format(match[0])
+            response = api_utils.load_info(gallery_url, resp_type='text')
+            match = CSFD_FANART_REGEX.findall(response)
+            if (match):
+                match_fixed = [i for n, i in enumerate(match) if i not in match[:n]]  # remove duplicites
+                for image in match_fixed:
+                    fanart_original = FANART_URL.format(image)
+                    fanart_preview = FANART_PREVIEW_URL.format(image)
+                    fanart.append({
+                        'original': fanart_original,
+                        'preview': fanart_preview
+                    }) 
     
     if rating: 
         rating = {'rating': float(rating)/10, 'votes': int(votes.replace(u'\xa0', u''))}
