@@ -6,5 +6,6 @@
 		<setting label="30002" type="bool" id="tmdbposter" default="false"/>
 		<setting label="30003" type="labelenum" id="rating" values="CSFD|TMDB|IMDB" default="CSFD"/>
 		<setting label="30004" type="bool" id="tmdbenplot" default="false"/>
+		<setting label="30005" type="bool" id="csfdcomments" default="true"/>
 	</category>
 </settings>

@@ -35,3 +35,7 @@ msgstr ""
 msgctxt "#30004"
 msgid "Prefer english plot before CSFD comment"
 msgstr ""
+
+msgctxt "#30005"
+msgid "Load CSFD comments into plotoutline"
+msgstr ""

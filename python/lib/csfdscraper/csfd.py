@@ -188,6 +188,7 @@ def get_movie(url, settings):
 
     response = api_utils.load_info(url, resp_type='text')
     info = {}
+    plotoutline=[]
     
     match = CSFD_CZTITLE_REGEX.findall(response)
     if (match): 
@@ -241,6 +242,12 @@ def get_movie(url, settings):
     match = CSFD_COUNTRY_REGEX.findall(response)
     if (match): info['country'] = match[0].split(" / ")
     
+    match = CSFD_COMMENT_REGEX.findall(response)
+    if (match):
+        for comment in match:
+            plotoutline.append('{0}{1}'.format(comment.strip().encode('utf-8'), '\n-----\n'))
+        if settings.getSettingBool('csfdcomments'): info['plotoutline'] = ''.join(plotoutline)
+    
     if settings.getSettingBool('tmdbfanart') or settings.getSettingBool('tmdbposter') or settings.getSettingString('rating')=='TMDB' or 'plot' not in info: 
         tmdb_info = get_tmdb_info(info['originaltitle'], info['year'], uniqueids['tmdb'], settings)
         #xbmc.log(' TMDB RESPONSE {}'.format(tmdb_info) , xbmc.LOGDEBUG)
@@ -253,11 +260,9 @@ def get_movie(url, settings):
             if tmdb_info['plot']:
                 info['plot'] = tmdb_info['plot']
                 
-        if 'plot' not in info:   #fallback to first CSFD comment instead plot
+        if 'plot' not in info and plotoutline:   #fallback to first CSFD comment instead plot
             match = CSFD_COMMENT_REGEX.findall(response)
-            if (match):
-                plot = re.sub(r'<[^>]*>', '', match[0].strip(), flags=re.MULTILINE)
-                info['plot'] = '{0}\n{1}'.format(u'KOMENTÁŘ NA ČSFD:'.encode('utf-8'), plot.encode('utf-8'))
+            info['plot'] = '{0}\n{1}'.format(u'KOMENTÁŘ NA ČSFD:'.encode('utf-8'), plotoutline[0].strip().encode('utf-8'))
 
     if not settings.getSettingBool('tmdbposter') or not tmdb_info or tmdb_info['poster'] is None:  # TMDB poster OFF or fallback 
         match = CSFD_THUMB_REGEX.findall(response)
