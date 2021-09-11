@@ -36,7 +36,8 @@ api_utils.set_headers(dict(HEADERS_CSFD))
 
 BASE_URL = 'https://www.csfd.cz/{}'
 CSFD_MOVIE_URL = BASE_URL.format('film/{}')
-GALLERY_URL = 'https://www.csfd.cz/film/{}/galerie/'
+CSFD_GALLERY_URL = CSFD_MOVIE_URL.format('{}/galerie/')
+CSFD_COMMENTS_URL = CSFD_MOVIE_URL.format('{}/recenze/')
 THUMB_URL = 'https://image.pmgstatic.com/files/images/film/posters/{}'
 THUMB_PREVIEW_URL = 'https://image.pmgstatic.com/cache/resized/w420/files/images/film/posters/{}'
 FANART_URL = 'https://image.pmgstatic.com/files/images/film/photos/{}'
@@ -60,9 +61,10 @@ CSFD_CAST_LIMIT = 8
 CSFD_YEAR_REGEX = re.compile(r'<span itemprop="dateCreated"[^>]*>([^<]*)<')
 CSFD_GENRE_REGEX = re.compile(r'<div class="genres">([^<]*)')
 CSFD_COUNTRY_REGEX = re.compile(r'<div class="origin">([^,]*),')
-CSFD_GALLERYURL_REGEX = re.compile(r'\/film\/([^\/]*)\/galerie')
+CSFD_TITLE_URL_REGEX = re.compile(r'\/film\/([^\/]*)\/galerie')
 CSFD_FANART_REGEX = re.compile(r'srcset=.*\/photos\/([^ ]*\....)')
-CSFD_COMMENT_REGEX = re.compile(r'icon-permalink[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>\s*([^<]*)', re.DOTALL)
+#CSFD_COMMENT_REGEX = re.compile(r'icon-permalink[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>\s*([^<]*)', re.DOTALL)
+CSFD_COMMENT_REGEX = re.compile(r'class=\"user-title-name\">([^<]*)[^>]*>[^>]*>[^>]*><span class=\"stars stars-(\d)\">[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>\s*([^<]*)', re.DOTALL)
 
 TMDB_PARAMS = {'api_key': 'f090bb54758cabf231fb605d3e3e0468'}
 TMDB_URL = 'https://api.themoviedb.org/3/{}'
@@ -207,7 +209,6 @@ def get_movie(url, settings):
         info['originaltitle'] = html_strip(info['originaltitle'])
     except KeyError:
         info['originaltitle'] = info['title'] # fallback when scrapper returns empty string  
-    
 
     match = CSFD_PLOT_REGEX.findall(response)
     if (match): 
@@ -242,10 +243,16 @@ def get_movie(url, settings):
     match = CSFD_COUNTRY_REGEX.findall(response)
     if (match): info['country'] = match[0].split(" / ")
     
-    match = CSFD_COMMENT_REGEX.findall(response)
+    if settings.getSettingBool('csfdlongcomments') and settings.getSettingBool('csfdcomments'):
+        match = CSFD_TITLE_URL_REGEX.findall(response)
+        if (match): 
+            comments_url = CSFD_COMMENTS_URL.format(match[0])
+            response_comments = api_utils.load_info(comments_url, resp_type='text')
+            match = CSFD_COMMENT_REGEX.findall(response_comments)
+    else: match = CSFD_COMMENT_REGEX.findall(response)
     if (match):
         for comment in match:
-            plotoutline.append('{0}{1}'.format(comment.strip().encode('utf-8'), '\n-----\n'))
+            plotoutline.append('{0} ({1}/5): {2}{3}'.format(comment[0].encode('utf-8'),comment[1].encode('utf-8'),comment[2].strip().encode('utf-8'), '\n-----\n'))
         if settings.getSettingBool('csfdcomments'): info['plotoutline'] = ''.join(plotoutline)
     
     if settings.getSettingBool('tmdbfanart') or settings.getSettingBool('tmdbposter') or settings.getSettingString('rating')=='TMDB' or 'plot' not in info: 
@@ -257,12 +264,11 @@ def get_movie(url, settings):
                 poster = {'original' : TMDB_IMAGE_ORIGINAL.format(tmdb_info['poster']), 'preview' : TMDB_IMAGE_PREVIEW.format(tmdb_info['poster'])}
             if tmdb_info['fanart'] is not None:
                 fanart = [{'original' : TMDB_IMAGE_ORIGINAL.format(tmdb_info['fanart']), 'preview' : TMDB_IMAGE_PREVIEW.format(tmdb_info['fanart'])}]
-            if tmdb_info['plot']:
+            if tmdb_info['plot'] and 'plot' not in info:
                 info['plot'] = tmdb_info['plot']
                 
         if 'plot' not in info and plotoutline:   #fallback to first CSFD comment instead plot
-            match = CSFD_COMMENT_REGEX.findall(response)
-            info['plot'] = '{0}\n{1}'.format(u'KOMENTÁŘ NA ČSFD:'.encode('utf-8'), plotoutline[0].strip().encode('utf-8'))
+            info['plot'] = '{0}\n{1}'.format(u'KOMENTÁŘ NA ČSFD:'.encode('utf-8'), plotoutline[0])
 
     if not settings.getSettingBool('tmdbposter') or not tmdb_info or tmdb_info['poster'] is None:  # TMDB poster OFF or fallback 
         match = CSFD_THUMB_REGEX.findall(response)
@@ -271,11 +277,11 @@ def get_movie(url, settings):
     
     if not settings.getSettingBool('tmdbfanart') or not tmdb_info or tmdb_info['fanart'] is None:  # TMDB fanart OFF or fallback
         fanart = []
-        match = CSFD_GALLERYURL_REGEX.findall(response)
+        match = CSFD_TITLE_URL_REGEX.findall(response)
         if (match): 
-            gallery_url = GALLERY_URL.format(match[0])
-            response = api_utils.load_info(gallery_url, resp_type='text')
-            match = CSFD_FANART_REGEX.findall(response)
+            gallery_url = CSFD_GALLERY_URL.format(match[0])
+            response_gallery = api_utils.load_info(gallery_url, resp_type='text')
+            match = CSFD_FANART_REGEX.findall(response_gallery)
             if (match):
                 match_fixed = [i for n, i in enumerate(match) if i not in match[:n]]  # remove duplicites
                 for image in match_fixed:

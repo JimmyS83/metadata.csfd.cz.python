@@ -32,8 +32,8 @@ msgctxt "#30003"
 msgid "Use Votes from"
 msgstr ""
 
-msgctxt "#30004"
-msgid "Prefer english plot before CSFD comment"
+msgctxt "#30006"
+msgid "Load more CSFD comments"
 msgstr ""
 
 msgctxt "#30005"

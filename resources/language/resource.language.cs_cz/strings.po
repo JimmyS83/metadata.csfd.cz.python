@@ -39,3 +39,7 @@ msgstr "Preferovat anglický obsah před ČSFD komentářem"
 msgctxt "#30005"
 msgid "Load CSFD comments into plotoutline"
 msgstr "Načítat ČSFD komentáře do plotoutline"
+
+msgctxt "#30006"
+msgid "Load more CSFD comments"
+msgstr "Načítat více ČSFD komentářů"

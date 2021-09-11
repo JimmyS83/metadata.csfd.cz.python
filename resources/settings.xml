@@ -7,5 +7,6 @@
 		<setting label="30003" type="labelenum" id="rating" values="CSFD|TMDB|IMDB" default="CSFD"/>
 		<setting label="30004" type="bool" id="tmdbenplot" default="false"/>
 		<setting label="30005" type="bool" id="csfdcomments" default="true"/>
+		<setting label="30006" type="bool" id="csfdlongcomments" default="false" enable="eq(-1,true)"/>
 	</category>
 </settings>
