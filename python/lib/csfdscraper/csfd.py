@@ -172,7 +172,7 @@ def search_movie(query, year=None):
         
     result_fixed = []
     for row in result:
-        result_fixed.append((BASE_URL.format(row[0]).decode('utf-8'), row[1], row[2]))
+        result_fixed.append((BASE_URL.format(row[0]), row[1], row[2]))
     
     return result_fixed
 
