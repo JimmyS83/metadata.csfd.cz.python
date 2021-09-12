@@ -134,7 +134,7 @@ def get_tmdb_info(title, year=None, uniqueid=None, settings=None):
         return {'poster': response['poster_path'], 'fanart': response['backdrop_path']}
     
     else: # query search
-        params['query'] = title.encode('utf-8')
+        params['query'] = title
         if year is not None:
             params['year'] = str(year)
         
@@ -252,7 +252,7 @@ def get_movie(url, settings):
     else: match = CSFD_COMMENT_REGEX.findall(response)
     if (match):
         for comment in match:
-            plotoutline.append('{0} ({1}/5): {2}{3}'.format(comment[0].encode('utf-8'),comment[1].encode('utf-8'),comment[2].strip().encode('utf-8'), '\n-----\n'))
+            plotoutline.append('{0} ({1}/5): {2}{3}'.format(comment[0],comment[1],comment[2].strip(), '\n-----\n'))
         if settings.getSettingBool('csfdcomments'): info['plotoutline'] = ''.join(plotoutline)
     
     if settings.getSettingBool('tmdbfanart') or settings.getSettingBool('tmdbposter') or settings.getSettingString('rating')=='TMDB' or 'plot' not in info: 
@@ -268,7 +268,7 @@ def get_movie(url, settings):
                 info['plot'] = tmdb_info['plot']
                 
         if 'plot' not in info and plotoutline:   #fallback to first CSFD comment instead plot
-            info['plot'] = '{0}\n{1}'.format(u'KOMENTÁŘ NA ČSFD:'.encode('utf-8'), plotoutline[0])
+            info['plot'] = '{0}\n{1}'.format(u'KOMENTÁŘ NA ČSFD:', plotoutline[0])
 
     if not settings.getSettingBool('tmdbposter') or not tmdb_info or tmdb_info['poster'] is None:  # TMDB poster OFF or fallback 
         match = CSFD_THUMB_REGEX.findall(response)
