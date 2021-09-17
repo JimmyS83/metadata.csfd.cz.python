@@ -19,7 +19,7 @@ def find_uniqueids_in_text(input_text):
     if (res):
         result['csfd'] = res.group(2)
     else:
-        return False
+        return False  # In case missing CSFD in nfo we wouldnt get to the directory name for query
     res = re.search(r'(themoviedb.org/movie/)([0-9]+)', input_text)
     if (res):
         result['tmdb'] = res.group(2)
