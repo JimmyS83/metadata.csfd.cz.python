@@ -128,10 +128,22 @@ def get_tmdb_info(title, year=None, uniqueid=None, settings=None):
     if uniqueid is not None: # direct lookup from .nfo
         #xbmc.log('\n direct URL from nfo {}{} to get TMDB fanart'.format(TMDB_MOVIE_URL.format(uniqueid), params), xbmc.LOGDEBUG)
         api_utils.set_headers(dict(HEADERS_TMDB))  # MAYBE NOT NEEDED
+        params['language'] = 'cs'
         response = api_utils.load_info(TMDB_MOVIE_URL.format(uniqueid), params=params)
         if 'error' in response:
             return False
-        return {'poster': response['poster_path'], 'fanart': response['backdrop_path']}
+
+        if not response['overview'] and settings.getSettingBool('tmdbenplot'):  # fallback to TMDB eng plot
+            params['language'] = None
+            
+            response_eng = api_utils.load_info(TMDB_MOVIE_URL.format(uniqueid), params=params)
+            if response_eng['overview']:
+                response['overview'] = response_eng['overview']
+
+            if 'error' in response:
+                return False
+        
+        return {'poster': response['poster_path'], 'fanart': response['backdrop_path'], 'rating': response['vote_average'],'votes': response['vote_count'], 'plot': response['overview']}
     
     else: # query search
         params['query'] = title.encode('utf-8')
