@@ -64,7 +64,8 @@ CSFD_COUNTRY_REGEX = re.compile(r'<div class="origin">([^,]*),')
 CSFD_TITLE_URL_REGEX = re.compile(r'\/film\/([^\/]*)\/galerie')
 CSFD_FANART_REGEX = re.compile(r'srcset=.*\/photos\/([^ ]*\....)')
 #CSFD_COMMENT_REGEX = re.compile(r'icon-permalink[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>\s*([^<]*)', re.DOTALL)
-CSFD_COMMENT_REGEX = re.compile(r'class=\"user-title-name\">([^<]*)[^>]*>[^>]*>[^>]*><span class=\"stars stars-(\d)\">[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>\s*([^<]*)', re.DOTALL)
+#CSFD_COMMENT_REGEX = re.compile(r'class=\"user-title-name\">([^<]*)[^>]*>[^>]*>[^>]*><span class=\"stars stars-(\d)\">[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>\s*([^<]*)', re.DOTALL)
+CSFD_COMMENT_REGEX = re.compile(r'class=\"user-title-name\">(.*?)</a>.*?<span class=\"stars stars-(\d)\">.*?<p>(.*?)<span class=', re.DOTALL)
 
 TMDB_PARAMS = {'api_key': 'f090bb54758cabf231fb605d3e3e0468'}
 TMDB_URL = 'https://api.themoviedb.org/3/{}'
@@ -82,10 +83,13 @@ IMDB_LDJSON_REGEX = re.compile(r'<script type="application/ld\+json">(.*?)</scri
 IMDB_RATING_REGEX = re.compile(r'AggregateRating\".*?ratingValue\":(.*?)}')
 IMDB_VOTES_REGEX = re.compile(r'AggregateRating\".*?ratingCount\":(.*?),')
 
+HTML_STRIP = re.compile('<.*?>')
+
 def html_strip(input):
     replaces = ( ('&amp;', '&'), )
     for pattern, repl in replaces:
         input = re.sub(pattern, repl, input)
+    input = re.sub(HTML_STRIP, '', input)
     return input
     
 def get_imdb_info(title, year=None, uniqueid=None):
@@ -264,7 +268,7 @@ def get_movie(url, settings):
     else: match = CSFD_COMMENT_REGEX.findall(response)
     if (match):
         for comment in match:
-            plotoutline.append('{0} ({1}/5): {2}{3}'.format(comment[0].encode('utf-8'),comment[1].encode('utf-8'),comment[2].strip().encode('utf-8'), '\n-----\n'))
+            plotoutline.append('{0} ({1}/5): {2}{3}'.format(comment[0].encode('utf-8'),comment[1].encode('utf-8'),html_strip(comment[2].strip().encode('utf-8')), '\n-----\n'))
         if settings.getSettingBool('csfdcomments'): info['plotoutline'] = ''.join(plotoutline)
     
     if settings.getSettingBool('tmdbfanart') or settings.getSettingBool('tmdbposter') or settings.getSettingString('rating')=='TMDB' or 'plot' not in info: 
