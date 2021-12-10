@@ -51,14 +51,14 @@ CSFD_CZTITLE_REGEX = re.compile(r'<h1[^>]*>([^<]*)<')
 CSFD_ORIGINALTITLE_REGEX = re.compile(r'class="flag".*?>([^<]*)(.*)<')
 CSFD_PLOT_REGEX = re.compile(r'plot-full.*\s*<p>\s*(.*)')
 CSFD_THUMB_REGEX = re.compile(r'image\.pmgstatic\.com.*posters/([^ ]*\....)')
-CSFD_RUNTIME_REGEX = re.compile(r', (\d*) min')
-CSFD_DIRECTOR_REGEX = re.compile(r'<h4>Re.ie[^>]*>[^>]*>[^>]*>([^<]*)')
+CSFD_RUNTIME_REGEX = re.compile(r'>(\d*) min')
+CSFD_DIRECTOR_REGEX = re.compile(r'<h4>Re.ie[^>]*>[^>]*>([^<]*)')
 CSFD_RATING_REGEX = re.compile(r'<div class=\"rating-average[^>]*>[^0-9]*([0-9]*)%')
 CSFD_VOTES_REGEX = re.compile(r'Hodnocen.<span class="counter">\(([^\)]*)\)')
-CSFD_CAST1_REGEX = re.compile(r'<h4>Hraj.[^>]*>.*<span >(.*)</span>', re.DOTALL)
+CSFD_CAST1_REGEX = re.compile(r'<h4>Hraj.: </h4>(.*)</span>', re.DOTALL)
 CSFD_CAST2_REGEX = re.compile(r'<a href="/tvurc[^>]*>([^<]*)</a>')
 CSFD_CAST_LIMIT = 8
-CSFD_YEAR_REGEX = re.compile(r'<span itemprop="dateCreated"[^>]*>([^<]*)<')
+CSFD_YEAR_REGEX = re.compile(r'"dateCreated":"(\d*)')
 CSFD_GENRE_REGEX = re.compile(r'<div class="genres">([^<]*)')
 CSFD_COUNTRY_REGEX = re.compile(r'<div class="origin">([^,]*),')
 CSFD_TITLE_URL_REGEX = re.compile(r'\/film\/([^\/]*)\/galerie')
@@ -212,6 +212,7 @@ def get_movie(url, settings):
     if (match): 
         info['title'] = match[0].strip()
         info['title'] = html_strip(info['title'])
+    else: xbmc.log('Nemame CSFD Title', xbmc.LOGWARNING)
 
     match = CSFD_ORIGINALTITLE_REGEX.findall(response)
     if (match):
@@ -230,12 +231,15 @@ def get_movie(url, settings):
     if (match): 
         plot = match[0].strip()
         info['plot'] = re.sub(r'<[^>]*>', '', plot, flags=re.MULTILINE)
+    else: xbmc.log('Nemame CSFD Plot', xbmc.LOGWARNING)
 
     match = CSFD_RUNTIME_REGEX.findall(response)
     if (match): info['duration'] = int(match[0])*60
+    else: xbmc.log('Nemame CSFD Runtime', xbmc.LOGWARNING)
     
     match = CSFD_DIRECTOR_REGEX.findall(response)
     if (match): info['director'] = match[0].split(", ")
+    else: xbmc.log('Nemame CSFD Director', xbmc.LOGWARNING)
     
     match = CSFD_CAST1_REGEX.findall(response)
     if (match): 
@@ -243,21 +247,27 @@ def get_movie(url, settings):
         info['cast'] = [] 
         for actor in match[:CSFD_CAST_LIMIT]:
             info['cast'].append(actor)
+    else: xbmc.log('Nemame CSFD Cast', xbmc.LOGWARNING)
     
     match = CSFD_RATING_REGEX.findall(response)
     if (match): rating = match[0]
+    else: xbmc.log('Nemame CSFD Rating', xbmc.LOGWARNING)
     
     match = CSFD_VOTES_REGEX.findall(response)
     if (match): votes = match[0]
+    else: xbmc.log('Nemame CSFD Votes', xbmc.LOGWARNING)
     
     match = CSFD_YEAR_REGEX.findall(response)
     if (match): info['year'] = int(match[0])
+    else: xbmc.log('Nemame CSFD Rok', xbmc.LOGWARNING)
     
     match = CSFD_GENRE_REGEX.findall(response)
     if (match): info['genre'] = match[0].split(" / ")
+    else: xbmc.log('Nemame CSFD Genre', xbmc.LOGWARNING)
     
     match = CSFD_COUNTRY_REGEX.findall(response)
     if (match): info['country'] = match[0].split(" / ")
+    else: xbmc.log('Nemame CSFD Country', xbmc.LOGWARNING)
     
     if settings.getSettingBool('csfdlongcomments') and settings.getSettingBool('csfdcomments'):
         match = CSFD_TITLE_URL_REGEX.findall(response)
@@ -270,6 +280,7 @@ def get_movie(url, settings):
         for comment in match:
             plotoutline.append('{0} ({1}/5): {2}{3}'.format(comment[0].encode('utf-8'),comment[1].encode('utf-8'),html_strip(comment[2].strip().encode('utf-8')), '\n-----\n'))
         if settings.getSettingBool('csfdcomments'): info['plotoutline'] = ''.join(plotoutline)
+    else: xbmc.log('Nemame CSFD Comments', xbmc.LOGWARNING)
     
     if settings.getSettingBool('tmdbfanart') or settings.getSettingBool('tmdbposter') or settings.getSettingString('rating')=='TMDB' or 'plot' not in info: 
         tmdb_info = get_tmdb_info(info['originaltitle'], info['year'], uniqueids['tmdb'], settings)
