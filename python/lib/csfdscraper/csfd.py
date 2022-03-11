@@ -251,11 +251,15 @@ def get_movie(url, settings):
     
     match = CSFD_RATING_REGEX.findall(response)
     if (match): rating = match[0]
-    else: xbmc.log('Nemame CSFD Rating', xbmc.LOGWARNING)
+    else:
+        rating = None
+        xbmc.log('Nemame CSFD Rating', xbmc.LOGWARNING)
     
     match = CSFD_VOTES_REGEX.findall(response)
     if (match): votes = match[0]
-    else: xbmc.log('Nemame CSFD Votes', xbmc.LOGWARNING)
+    else: 
+        votes = '-'
+        xbmc.log('Nemame CSFD Votes', xbmc.LOGWARNING)
     
     match = CSFD_YEAR_REGEX.findall(response)
     if (match): info['year'] = int(match[0])
@@ -318,10 +322,10 @@ def get_movie(url, settings):
                         'original': fanart_original,
                         'preview': fanart_preview
                     }) 
-    
+    if votes != '-': votes = int(votes.replace(u'\xa0', u''))
     if rating: 
-        rating = {'rating': float(rating)/10, 'votes': int(votes.replace(u'\xa0', u''))}
-    else : rating = {'rating': False, 'votes': int(votes.replace(u'\xa0', u''))}
+        rating = {'rating': float(rating)/10, 'votes': votes}
+    else : rating = {'rating': False, 'votes': votes}
     
     if settings.getSettingString('rating')=='TMDB' and tmdb_info and tmdb_info['rating'] is not None:
             rating = {'rating': float(tmdb_info['rating']), 'votes': int(tmdb_info['votes'])}
