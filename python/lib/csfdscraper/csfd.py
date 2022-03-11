@@ -53,7 +53,7 @@ CSFD_PLOT_REGEX = re.compile(r'plot-full.*\s*<p>\s*(.*)')
 CSFD_THUMB_REGEX = re.compile(r'image\.pmgstatic\.com.*posters/([^ ]*\....)')
 CSFD_RUNTIME_REGEX = re.compile(r'>(\d*) min')
 CSFD_DIRECTOR_REGEX = re.compile(r'<h4>Re.ie[^>]*>[^>]*>([^<]*)')
-CSFD_RATING_REGEX = re.compile(r'<div class=\"rating-average[^>]*>[^0-9]*([0-9]*)%')
+CSFD_RATING_REGEX = re.compile(r'<div class=\"film-rating-average[^>]*>[^0-9]*([0-9]*)%')
 CSFD_VOTES_REGEX = re.compile(r'Hodnocen.<span class="counter">\(([^\)]*)\)')
 CSFD_CAST1_REGEX = re.compile(r'<h4>Hraj.: </h4>(.*)</span>', re.DOTALL)
 CSFD_CAST2_REGEX = re.compile(r'<a href="/tvurc[^>]*>([^<]*)</a>')
@@ -251,11 +251,15 @@ def get_movie(url, settings):
     
     match = CSFD_RATING_REGEX.findall(response)
     if (match): rating = match[0]
-    else: xbmc.log('Nemame CSFD Rating', xbmc.LOGWARNING)
+    else:
+        rating = None
+        xbmc.log('Nemame CSFD Rating', xbmc.LOGWARNING)
     
     match = CSFD_VOTES_REGEX.findall(response)
     if (match): votes = match[0]
-    else: xbmc.log('Nemame CSFD Votes', xbmc.LOGWARNING)
+    else: 
+        votes = '-'
+        xbmc.log('Nemame CSFD Votes', xbmc.LOGWARNING)
     
     match = CSFD_YEAR_REGEX.findall(response)
     if (match): info['year'] = int(match[0])
@@ -318,10 +322,10 @@ def get_movie(url, settings):
                         'original': fanart_original,
                         'preview': fanart_preview
                     }) 
-    
+    if votes != '-': votes = int(votes.replace(u'\xa0', u''))
     if rating: 
-        rating = {'rating': float(rating)/10, 'votes': int(votes.replace(u'\xa0', u''))}
-    else : rating = {'rating': False, 'votes': int(votes.replace(u'\xa0', u''))}
+        rating = {'rating': float(rating)/10, 'votes': votes}
+    else : rating = {'rating': False, 'votes': votes}
     
     if settings.getSettingString('rating')=='TMDB' and tmdb_info and tmdb_info['rating'] is not None:
             rating = {'rating': float(tmdb_info['rating']), 'votes': int(tmdb_info['votes'])}
