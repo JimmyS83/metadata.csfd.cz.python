@@ -32,10 +32,18 @@ msgctxt "#30003"
 msgid "Use Votes from"
 msgstr ""
 
-msgctxt "#30006"
-msgid "Load more CSFD comments"
+msgctxt "#30004"
+msgid "Prefer english plot before CSFD comment"
 msgstr ""
 
 msgctxt "#30005"
 msgid "Load CSFD comments into plotoutline"
+msgstr ""
+
+msgctxt "#30006"
+msgid "Load more CSFD comments"
+msgstr ""
+
+msgctxt "#30007"
+msgid "Prioritize TMDB Trailer"
 msgstr ""

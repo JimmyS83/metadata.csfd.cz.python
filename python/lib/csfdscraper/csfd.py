@@ -71,6 +71,7 @@ TMDB_PARAMS = {'api_key': 'f090bb54758cabf231fb605d3e3e0468'}
 TMDB_URL = 'https://api.themoviedb.org/3/{}'
 TMDB_SEARCH_URL = TMDB_URL.format('search/movie')
 TMDB_MOVIE_URL = TMDB_URL.format('movie/{}')
+TMDB_VIDEOS_URL = TMDB_URL.format('movie/{}/videos')
 TMDB_IMAGE_PREVIEW = 'https://image.tmdb.org/t/p/w500{}'
 TMDB_IMAGE_ORIGINAL = 'https://image.tmdb.org/t/p/original{}'
 
@@ -130,9 +131,10 @@ def get_tmdb_info(title, year=None, uniqueid=None, settings=None):
     params = TMDB_PARAMS.copy()
     
     if uniqueid is not None: # direct lookup from .nfo
-        #xbmc.log('\n direct URL from nfo {}{} to get TMDB fanart'.format(TMDB_MOVIE_URL.format(uniqueid), params), xbmc.LOGDEBUG)
         api_utils.set_headers(dict(HEADERS_TMDB))  # MAYBE NOT NEEDED
         params['language'] = 'cs'
+        params['append_to_response'] = 'videos'
+        #xbmc.log('\n direct URL from nfo {}{} to get TMDB fanart'.format(TMDB_MOVIE_URL.format(uniqueid), params), xbmc.LOGDEBUG)
         response = api_utils.load_info(TMDB_MOVIE_URL.format(uniqueid), params=params)
         if 'error' in response:
             return False
@@ -147,16 +149,27 @@ def get_tmdb_info(title, year=None, uniqueid=None, settings=None):
             if 'error' in response:
                 return False
         
-        return {'poster': response['poster_path'], 'fanart': response['backdrop_path'], 'rating': response['vote_average'],'votes': response['vote_count'], 'plot': response['overview']}
+        #Trailers
+        params = TMDB_PARAMS.copy()
+        trailer = None
+        for video in response['videos']['results']:
+            if (video['type'] == 'Trailer' and video['size'] == 1080 and video['site'] == 'YouTube'):
+                trailer = 'plugin://plugin.video.youtube/?action=play_video&videoid='+video['key']
+                break
+        
+        
+        #xbmc.log('\n TMDB returns movie details {}'.format(response), xbmc.LOGDEBUG)
+        
+        return {'poster': response['poster_path'], 'fanart': response['backdrop_path'], 'rating': response['vote_average'],'votes': response['vote_count'], 'trailer': trailer, 'plot': response['overview']}
     
     else: # query search
         params['query'] = title.encode('utf-8')
         if year is not None:
             params['year'] = str(year)
-        
+                
+        params['language'] = 'cs'
         #xbmc.log('\n using movie query query {}{} to get TMDB fanart'.format(TMDB_SEARCH_URL, params), xbmc.LOGDEBUG)
         
-        params['language'] = 'cs'
         api_utils.set_headers(dict(HEADERS_TMDB))  # MAYBE NOT NEEDED
         response = api_utils.load_info(TMDB_SEARCH_URL, params=params)
         #xbmc.log('\n TMDB returns movie details {}'.format(response), xbmc.LOGDEBUG)
@@ -173,8 +186,20 @@ def get_tmdb_info(title, year=None, uniqueid=None, settings=None):
 
             if 'error' in response or response['total_results'] == 0:
                 return False
-
-        return {'poster': response['results'][0]['poster_path'], 'fanart': response['results'][0]['backdrop_path'], 'rating': response['results'][0]['vote_average'],'votes': response['results'][0]['vote_count'], 'plot': response['results'][0]['overview']}
+        
+        #Trailers
+        params = TMDB_PARAMS.copy()
+        trailer = None
+        response_videos = api_utils.load_info(TMDB_VIDEOS_URL.format(response['results'][0]['id']), params=params)
+        videos = response_videos['results']
+        #videos.sort(key=lambda x: x["published_at"])
+        xbmc.log('\n TMDB returns movie videos {}'.format(videos), xbmc.LOGDEBUG)
+        for video in videos:
+            if (video['type'] == 'Trailer' and video['size'] == 1080 and video['site'] == 'YouTube'):
+                trailer = 'plugin://plugin.video.youtube/?action=play_video&videoid='+video['key']
+                break
+        
+        return {'poster': response['results'][0]['poster_path'], 'fanart': response['results'][0]['backdrop_path'], 'rating': response['results'][0]['vote_average'],'votes': response['results'][0]['vote_count'], 'trailer': trailer, 'plot': response['results'][0]['overview']}
 
 def search_movie(query, year=None):
     #xbmc.log('using title: %s to find movie' % query, xbmc.LOGDEBUG)
@@ -286,7 +311,7 @@ def get_movie(url, settings):
         if settings.getSettingBool('csfdcomments'): info['plotoutline'] = ''.join(plotoutline)
     else: xbmc.log('Nemame CSFD Comments', xbmc.LOGWARNING)
     
-    if settings.getSettingBool('tmdbfanart') or settings.getSettingBool('tmdbposter') or settings.getSettingString('rating')=='TMDB' or 'plot' not in info: 
+    if settings.getSettingBool('tmdbfanart') or settings.getSettingBool('tmdbposter') or settings.getSettingString('rating')=='TMDB' or settings.getSettingBool('tmdbtrailer') or 'plot' not in info: 
         tmdb_info = get_tmdb_info(info['originaltitle'], info['year'], uniqueids['tmdb'], settings)
         #xbmc.log(' TMDB RESPONSE {}'.format(tmdb_info) , xbmc.LOGDEBUG)
         
@@ -297,6 +322,8 @@ def get_movie(url, settings):
                 fanart = [{'original' : TMDB_IMAGE_ORIGINAL.format(tmdb_info['fanart']), 'preview' : TMDB_IMAGE_PREVIEW.format(tmdb_info['fanart'])}]
             if tmdb_info['plot'] and 'plot' not in info:
                 info['plot'] = tmdb_info['plot']
+            if tmdb_info['trailer'] is not None and (settings.getSettingBool('tmdbtrailer') or 'trailer' not in info):
+                info['trailer'] = tmdb_info['trailer']
                 
         if 'plot' not in info and plotoutline:   #fallback to first CSFD comment instead plot
             info['plot'] = '{0}\n{1}'.format(u'KOMENTÁŘ NA ČSFD:'.encode('utf-8'), plotoutline[0])
