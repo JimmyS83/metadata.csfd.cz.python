@@ -43,3 +43,7 @@ msgstr "Načítat ČSFD komentáře do plotoutline"
 msgctxt "#30006"
 msgid "Load more CSFD comments"
 msgstr "Načítat více ČSFD komentářů"
+
+msgctxt "#30007"
+msgid "Prioritize TMDB Trailer"
+msgstr "Preferovat Trailer z TMDB"
