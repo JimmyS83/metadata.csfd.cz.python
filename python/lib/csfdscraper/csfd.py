@@ -364,13 +364,13 @@ def get_movie(url, settings):
         #xbmc.log(' TMDB RESPONSE {}'.format(tmdb_info) , xbmc.LOGDEBUG)
         
         if tmdb_info:
-            if tmdb_info['poster'] is not None:
+            if 'poster' in tmdb_info and tmdb_info['poster'] is not None:
                 poster = {'original' : TMDB_IMAGE_ORIGINAL.format(tmdb_info['poster']), 'preview' : TMDB_IMAGE_PREVIEW.format(tmdb_info['poster'])}
-            if tmdb_info['fanart'] is not None:
+            if 'fanart' in tmdb_info and tmdb_info['fanart'] is not None:
                 fanart = [{'original' : TMDB_IMAGE_ORIGINAL.format(tmdb_info['fanart']), 'preview' : TMDB_IMAGE_PREVIEW.format(tmdb_info['fanart'])}]
-            if tmdb_info['plot'] and 'plot' not in info:
+            if 'plot' in tmdb_info and 'plot' not in info:
                 info['plot'] = tmdb_info['plot']
-            if tmdb_info['trailer'] is not None and (settings.getSettingBool('tmdbtrailer') or 'trailer' not in info):
+            if 'trailer' in tmdb_info and (settings.getSettingBool('tmdbtrailer') or 'trailer' not in info):
                 info['trailer'] = tmdb_info['trailer']
                 
         if 'plot' not in info and plotoutline:   #fallback to first CSFD comment instead plot
