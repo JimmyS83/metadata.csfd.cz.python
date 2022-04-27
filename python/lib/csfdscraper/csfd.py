@@ -3,6 +3,7 @@ import json
 from . import api_utils
 import xbmc
 import re
+import base64
 try:
     from typing import Optional, Text, Dict, List, Any  # pylint: disable=unused-import
     InfoType = Dict[Text, Any]  # pylint: disable=invalid-name
@@ -25,8 +26,19 @@ class CSFDMovieScraper(object):
         return details
 
 
+def decrypt_replacer(match):
+    if 'n' > match.group(0).lower(): return chr(ord(match.group(0)[0]) + 13)
+    else: return chr(ord(match.group(0)[0]) - 13)
+        
+def decrypt(input):
+    decrypted = re.sub(r'[a-z]', decrypt_replacer, input, flags=re.IGNORECASE)
+    decrypted = decrypted + '=' * (4 - len(decrypted) % 4) if len(decrypted) % 4 != 0 else decrypted
+    decoded = base64.b64decode(decrypted)
+    return json.loads(decoded)
+
 HEADERS_CSFD = (
     ('User-Agent', 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:33.0) Gecko/20120101 Firefox/33.0'),
+    ('Referer', 'https://www.csfd.cz'),
 )
 HEADERS_TMDB = (
     ('User-Agent', 'Kodi Movie scraper by Team Kodi'),
@@ -38,6 +50,7 @@ BASE_URL = 'https://www.csfd.cz/{}'
 CSFD_MOVIE_URL = BASE_URL.format('film/{}')
 CSFD_GALLERY_URL = CSFD_MOVIE_URL.format('{}/galerie/')
 CSFD_COMMENTS_URL = CSFD_MOVIE_URL.format('{}/recenze/')
+CSFD_VIDEO_PLAYER = BASE_URL.format('/api/video-player/')
 THUMB_URL = 'https://image.pmgstatic.com/files/images/film/posters/{}'
 THUMB_PREVIEW_URL = 'https://image.pmgstatic.com/cache/resized/w420/files/images/film/posters/{}'
 FANART_URL = 'https://image.pmgstatic.com/files/images/film/photos/{}'
@@ -66,6 +79,7 @@ CSFD_FANART_REGEX = re.compile(r'srcset=.*\/photos\/([^ ]*\....)')
 #CSFD_COMMENT_REGEX = re.compile(r'icon-permalink[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>\s*([^<]*)', re.DOTALL)
 #CSFD_COMMENT_REGEX = re.compile(r'class=\"user-title-name\">([^<]*)[^>]*>[^>]*>[^>]*><span class=\"stars stars-(\d)\">[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>\s*([^<]*)', re.DOTALL)
 CSFD_COMMENT_REGEX = re.compile(r'class=\"user-title-name\">(.*?)</a>.*?<span class=\"stars stars-(\d)\">.*?<p>(.*?)<span class=', re.DOTALL)
+CSFD_TRAILER_REGEX = re.compile(r'request_data&quot;:&quot;([^\&]*)\&')
 
 TMDB_PARAMS = {'api_key': 'f090bb54758cabf231fb605d3e3e0468'}
 TMDB_URL = 'https://api.themoviedb.org/3/{}'
@@ -129,9 +143,9 @@ def get_imdb_info(title, year=None, uniqueid=None):
 
 def get_tmdb_info(title, year=None, uniqueid=None, settings=None):
     params = TMDB_PARAMS.copy()
+    api_utils.set_headers(dict(HEADERS_TMDB))  # MAYBE NOT NEEDED
     
     if uniqueid is not None: # direct lookup from .nfo
-        api_utils.set_headers(dict(HEADERS_TMDB))  # MAYBE NOT NEEDED
         params['language'] = 'cs'
         params['append_to_response'] = 'videos'
         #xbmc.log('\n direct URL from nfo {}{} to get TMDB fanart'.format(TMDB_MOVIE_URL.format(uniqueid), params), xbmc.LOGDEBUG)
@@ -157,10 +171,14 @@ def get_tmdb_info(title, year=None, uniqueid=None, settings=None):
                 trailer = 'plugin://plugin.video.youtube/?action=play_video&videoid='+video['key']
                 break
         
-        
-        #xbmc.log('\n TMDB returns movie details {}'.format(response), xbmc.LOGDEBUG)
-        
-        return {'poster': response['poster_path'], 'fanart': response['backdrop_path'], 'rating': response['vote_average'],'votes': response['vote_count'], 'trailer': trailer, 'plot': response['overview']}
+        return_response = {}
+        if 'poster' in response: return_response['poster'] = response['poster_path']
+        if 'fanart' in response: return_response['fanart'] = response['backdrop_path']
+        if 'rating' in response: return_response['rating'] = response['vote_average']
+        if 'votes' in response: return_response['votes'] = response['vote_count']
+        if 'plot' in response: return_response['plot'] = response['overview']
+        if trailer is not None: return_response['trailer'] = trailer
+        return return_response
     
     else: # query search
         params['query'] = title
@@ -170,7 +188,6 @@ def get_tmdb_info(title, year=None, uniqueid=None, settings=None):
         params['language'] = 'cs'
         #xbmc.log('\n using movie query query {}{} to get TMDB fanart'.format(TMDB_SEARCH_URL, params), xbmc.LOGDEBUG)
         
-        api_utils.set_headers(dict(HEADERS_TMDB))  # MAYBE NOT NEEDED
         response = api_utils.load_info(TMDB_SEARCH_URL, params=params)
         #xbmc.log('\n TMDB returns movie details {}'.format(response), xbmc.LOGDEBUG)
 
@@ -193,13 +210,21 @@ def get_tmdb_info(title, year=None, uniqueid=None, settings=None):
         response_videos = api_utils.load_info(TMDB_VIDEOS_URL.format(response['results'][0]['id']), params=params)
         videos = response_videos['results']
         #videos.sort(key=lambda x: x["published_at"])
-        xbmc.log('\n TMDB returns movie videos {}'.format(videos), xbmc.LOGDEBUG)
+        #xbmc.log('\n TMDB returns movie videos {}'.format(videos), xbmc.LOGDEBUG)
         for video in videos:
             if (video['type'] == 'Trailer' and video['size'] == 1080 and video['site'] == 'YouTube'):
                 trailer = 'plugin://plugin.video.youtube/?action=play_video&videoid='+video['key']
                 break
         
-        return {'poster': response['results'][0]['poster_path'], 'fanart': response['results'][0]['backdrop_path'], 'rating': response['results'][0]['vote_average'],'votes': response['results'][0]['vote_count'], 'trailer': trailer, 'plot': response['results'][0]['overview']}
+        
+        return_response = {}
+        if 'poster_path' in response['results'][0]: return_response['poster'] = response['results'][0]['poster_path']
+        if 'backdrop_path' in response['results'][0]: return_response['fanart'] = response['results'][0]['backdrop_path']
+        if 'vote_average' in response['results'][0]: return_response['rating'] = response['results'][0]['vote_average']
+        if 'vote_count' in response['results'][0]: return_response['votes'] = response['results'][0]['vote_count']
+        if 'overview' in response['results'][0]: return_response['plot'] = response['results'][0]['overview']
+        if trailer is not None: return_response['trailer'] = trailer
+        return return_response
 
 def search_movie(query, year=None):
     #xbmc.log('using title: %s to find movie' % query, xbmc.LOGDEBUG)
@@ -311,8 +336,31 @@ def get_movie(url, settings):
         if settings.getSettingBool('csfdcomments'): info['plotoutline'] = ''.join(plotoutline)
     else: xbmc.log('Nemame CSFD Comments', xbmc.LOGWARNING)
     
+
+    match = CSFD_TRAILER_REGEX.findall(response)
+    trailer_url = None
+    if (match):
+        params = {}
+        params['data'] = match[0]
+        response_trailer = api_utils.load_info(CSFD_VIDEO_PLAYER, params=params, resp_type='text')
+        response_trailer = decrypt(response_trailer)
+        response_trailer = response_trailer['sources']
+        
+        if len(response_trailer) > 0:
+            response_trailer_sorted = []
+            for key in response_trailer:
+                response_trailer_sorted.append([int(key[:-1]), response_trailer[key][0]['src']])
+            response_trailer_sorted = sorted(response_trailer_sorted,key=lambda l:l[0], reverse=True)
+            trailer_url = "https://{0}".format(response_trailer_sorted[0][1][2:])
+        
+        if trailer_url is not None: info['trailer'] = trailer_url
+        
+    if trailer_url is None: xbmc.log('Nemame CSFD Trailer', xbmc.LOGWARNING)
+    
+    
     if settings.getSettingBool('tmdbfanart') or settings.getSettingBool('tmdbposter') or settings.getSettingString('rating')=='TMDB' or settings.getSettingBool('tmdbtrailer') or 'plot' not in info: 
         tmdb_info = get_tmdb_info(info['originaltitle'], info['year'], uniqueids['tmdb'], settings)
+        api_utils.set_headers(dict(HEADERS_CSFD))
         #xbmc.log(' TMDB RESPONSE {}'.format(tmdb_info) , xbmc.LOGDEBUG)
         
         if tmdb_info:
