@@ -172,11 +172,11 @@ def get_tmdb_info(title, year=None, uniqueid=None, settings=None):
                 break
         
         return_response = {}
-        if 'poster' in response: return_response['poster'] = response['poster_path']
-        if 'fanart' in response: return_response['fanart'] = response['backdrop_path']
-        if 'rating' in response: return_response['rating'] = response['vote_average']
-        if 'votes' in response: return_response['votes'] = response['vote_count']
-        if 'plot' in response: return_response['plot'] = response['overview']
+        if 'poster_path' in response: return_response['poster'] = response['poster_path']
+        if 'backdrop_path' in response: return_response['fanart'] = response['backdrop_path']
+        if 'vote_average' in response: return_response['rating'] = response['vote_average']
+        if 'vote_count' in response: return_response['votes'] = response['vote_count']
+        if 'overview' in response: return_response['plot'] = response['overview']
         if trailer is not None: return_response['trailer'] = trailer
         return return_response
     
@@ -376,7 +376,7 @@ def get_movie(url, settings):
         if 'plot' not in info and plotoutline:   #fallback to first CSFD comment instead plot
             info['plot'] = '{0}\n{1}'.format(u'KOMENTÁŘ NA ČSFD:', plotoutline[0])
 
-    if not settings.getSettingBool('tmdbposter') or not tmdb_info or tmdb_info['poster'] is None:  # TMDB poster OFF or fallback 
+    if not settings.getSettingBool('tmdbposter') or not tmdb_info or 'poster' not in tmdb_info:  # TMDB poster OFF or fallback 
         match = CSFD_THUMB_REGEX.findall(response)
         poster = {'original' : '', 'preview' : ''}
         if (match): poster = {'original' : THUMB_URL.format(match[0]), 'preview' : THUMB_PREVIEW_URL.format(match[0])}        
