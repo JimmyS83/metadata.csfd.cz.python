@@ -4,6 +4,9 @@ from . import api_utils
 import xbmc
 import re
 import base64
+
+import unicodedata
+
 try:
     from typing import Optional, Text, Dict, List, Any  # pylint: disable=unused-import
     InfoType = Dict[Text, Any]  # pylint: disable=invalid-name
@@ -100,7 +103,22 @@ IMDB_VOTES_REGEX = re.compile(r'AggregateRating\".*?ratingCount\":(.*?),')
 
 HTML_STRIP = re.compile('<.*?>')
 
+def normalize_name(name):
+    name = unicodedata.normalize('NFKD', name)
+    output = ''
+    for c in name:
+        if not unicodedata.combining(c):
+            output += c
+
+    return output
+
 def html_strip(input):
+    temp = normalize_name(input) # Emoticons etc. in utf8bm4 - problematic for some DB when storing 
+    try:
+        xbmc.log('\n\n\n b {}\n\n\n'.format(temp), xbmc.LOGDEBUG)
+    except:
+        return '-'
+
     replaces = ( ('&amp;', '&'), )
     for pattern, repl in replaces:
         input = re.sub(pattern, repl, input)
