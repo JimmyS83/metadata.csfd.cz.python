@@ -280,7 +280,7 @@ def get_movie(url, settings):
     if (match): 
         info['title'] = match[0].strip()
         info['title'] = html_strip(info['title'])
-    else: xbmc.log('Nemame CSFD Title', xbmc.LOGWARNING)
+    else: xbmc.log('{0} - Nemame CSFD Title'.format(url), xbmc.LOGWARNING)
 
     match = CSFD_ORIGINALTITLE_REGEX.findall(response)
     if (match):
@@ -299,15 +299,15 @@ def get_movie(url, settings):
     if (match): 
         plot = match[0].strip()
         info['plot'] = re.sub(r'<[^>]*>', '', plot, flags=re.MULTILINE)
-    else: xbmc.log('Nemame CSFD Plot', xbmc.LOGWARNING)
+    else: xbmc.log('{0} - Nemame CSFD Plot'.format(url), xbmc.LOGWARNING)
 
     match = CSFD_RUNTIME_REGEX.findall(response)
     if (match): info['duration'] = int(match[0])*60
-    else: xbmc.log('Nemame CSFD Runtime', xbmc.LOGWARNING)
+    else: xbmc.log('{0} - Nemame CSFD Runtime'.format(url), xbmc.LOGWARNING)
     
     match = CSFD_DIRECTOR_REGEX.findall(response)
     if (match): info['director'] = match[0].split(", ")
-    else: xbmc.log('Nemame CSFD Director', xbmc.LOGWARNING)
+    else: xbmc.log('{0} - Nemame CSFD Director'.format(url), xbmc.LOGWARNING)
     
     match = CSFD_CAST1_REGEX.findall(response)
     if (match): 
@@ -315,31 +315,31 @@ def get_movie(url, settings):
         info['cast'] = [] 
         for actor in match[:CSFD_CAST_LIMIT]:
             info['cast'].append(actor)
-    else: xbmc.log('Nemame CSFD Cast', xbmc.LOGWARNING)
+    else: xbmc.log('{0} - Nemame CSFD Cast'.format(url), xbmc.LOGWARNING)
     
     match = CSFD_RATING_REGEX.findall(response)
     if (match): rating = match[0]
     else:
         rating = None
-        xbmc.log('Nemame CSFD Rating', xbmc.LOGWARNING)
+        xbmc.log('{0} - Nemame CSFD Rating'.format(url), xbmc.LOGWARNING)
     
     match = CSFD_VOTES_REGEX.findall(response)
     if (match): votes = match[0]
     else: 
         votes = '-'
-        xbmc.log('Nemame CSFD Votes', xbmc.LOGWARNING)
+        xbmc.log('{0} - Nemame CSFD Votes'.format(url), xbmc.LOGWARNING)
     
     match = CSFD_YEAR_REGEX.findall(response)
     if (match): info['year'] = int(match[0])
-    else: xbmc.log('Nemame CSFD Rok', xbmc.LOGWARNING)
+    else: xbmc.log('{0} - Nemame CSFD Rok'.format(url), xbmc.LOGWARNING)
     
     match = CSFD_GENRE_REGEX.findall(response)
     if (match): info['genre'] = match[0].split(" / ")
-    else: xbmc.log('Nemame CSFD Genre', xbmc.LOGWARNING)
+    else: xbmc.log('{0} - Nemame CSFD Genre'.format(url), xbmc.LOGWARNING)
     
     match = CSFD_COUNTRY_REGEX.findall(response)
     if (match): info['country'] = match[0].split(" / ")
-    else: xbmc.log('Nemame CSFD Country', xbmc.LOGWARNING)
+    else: xbmc.log('{0} - Nemame CSFD Country'.format(url), xbmc.LOGWARNING)
     
     if settings.getSettingBool('csfdlongcomments') and settings.getSettingBool('csfdcomments'):
         match = CSFD_TITLE_URL_REGEX.findall(response)
@@ -352,7 +352,7 @@ def get_movie(url, settings):
         for comment in match:
             plotoutline.append('{0} ({1}/5): {2}{3}'.format(comment[0],comment[1],html_strip(comment[2].strip()), '\n-----\n'))
         if settings.getSettingBool('csfdcomments'): info['plotoutline'] = ''.join(plotoutline)
-    else: xbmc.log('Nemame CSFD Comments', xbmc.LOGWARNING)
+    else: xbmc.log('{0} - Nemame CSFD Comments'.format(url), xbmc.LOGWARNING)
     
 
     match = CSFD_TRAILER_REGEX.findall(response)
@@ -373,7 +373,7 @@ def get_movie(url, settings):
         
         if trailer_url is not None: info['trailer'] = trailer_url
         
-    if trailer_url is None: xbmc.log('Nemame CSFD Trailer', xbmc.LOGWARNING)
+    if trailer_url is None: xbmc.log('{0} - Nemame CSFD Trailer'.format(url), xbmc.LOGWARNING)
     
     
     if settings.getSettingBool('tmdbfanart') or settings.getSettingBool('tmdbposter') or settings.getSettingString('rating')=='TMDB' or settings.getSettingBool('tmdbtrailer') or 'plot' not in info: 
