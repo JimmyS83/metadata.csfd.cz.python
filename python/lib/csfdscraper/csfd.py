@@ -71,7 +71,7 @@ CSFD_RUNTIME_REGEX = re.compile(r'>(\d*) min')
 CSFD_DIRECTOR_REGEX = re.compile(r'<h4>Re.ie[^>]*>[^>]*>([^<]*)')
 CSFD_RATING_REGEX = re.compile(r'<div class=\"film-rating-average[^>]*>[^0-9]*([0-9]*)%')
 CSFD_VOTES_REGEX = re.compile(r'Hodnocen.<span class="counter">\(([^\)]*)\)')
-CSFD_CAST1_REGEX = re.compile(r'<h4>Hraj.: </h4>(.*)</span>', re.DOTALL)
+CSFD_CAST1_REGEX = re.compile(r'<h4>Hraj.:</h4>(.*)</span>', re.DOTALL)
 CSFD_CAST2_REGEX = re.compile(r'<a href="/tvurc[^>]*>([^<]*)</a>')
 CSFD_CAST_LIMIT = 8
 CSFD_YEAR_REGEX = re.compile(r'"dateCreated":"(\d*)')
