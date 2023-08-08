@@ -81,7 +81,8 @@ CSFD_TITLE_URL_REGEX = re.compile(r'\/film\/([^\/]*)\/galerie')
 CSFD_FANART_REGEX = re.compile(r'srcset=.*\/photos\/([^ ]*\....)')
 #CSFD_COMMENT_REGEX = re.compile(r'icon-permalink[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>\s*([^<]*)', re.DOTALL)
 #CSFD_COMMENT_REGEX = re.compile(r'class=\"user-title-name\">([^<]*)[^>]*>[^>]*>[^>]*><span class=\"stars stars-(\d)\">[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>[^>]*>\s*([^<]*)', re.DOTALL)
-CSFD_COMMENT_REGEX = re.compile(r'class=\"user-title-name\">(.*?)</a>.*?<span class=\"stars stars-(\d)\">.*?<p>(.*?)<span class=', re.DOTALL)
+#CSFD_COMMENT_REGEX = re.compile(r'class=\"user-title-name\">(.*?)</a>.*?<span class=\"stars stars-(\d)\">.*?<p>(.*?)<span class=', re.DOTALL)
+CSFD_COMMENT_REGEX = re.compile(r'class=\"user-title-name\">(.*?)</a>.*?<span class=\"stars stars-(\d)\">.*?data-film-comment-content>(.*?)</span>', re.DOTALL)
 CSFD_TRAILER_REGEX = re.compile(r'request_data&quot;:&quot;([^\&]*)\&')
 
 TMDB_PARAMS = {'api_key': 'f090bb54758cabf231fb605d3e3e0468'}
