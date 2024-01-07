@@ -105,6 +105,8 @@ IMDB_VOTES_REGEX = re.compile(r'AggregateRating\".*?ratingCount\":(.*?),')
 HTML_STRIP = re.compile('<.*?>')
 
 def normalize_name(name):
+    re_pattern = re.compile(u'[^\u0000-\uD7FF\uE000-\uFFFF]', re.UNICODE)
+    name = re_pattern.sub(u'\uFFFD', name)    
     name = unicodedata.normalize('NFKD', name)
     output = ''
     for c in name:
@@ -248,19 +250,25 @@ def get_tmdb_info(title, year=None, uniqueid=None, settings=None):
 def search_movie(query, year=None):
     #xbmc.log('using title: %s to find movie' % query, xbmc.LOGDEBUG)
     params = {}
-    params['q'] = query
+    params['q'] = query 
     if year is not None:
         params['q'] = "{0} {1}".format(params['q'], str(year))
+    
+    if len(query) > 49:
+        params['q'] = query[:49]
+    
     response = api_utils.load_info(SEARCH_URL, params=params, resp_type='text')
     response_movies = re.findall(SEARCH_RESULT_MOVIES_REGEX, response)
-    result = re.findall(SEARCH_RESULT_REGEX, response_movies[0])
+    if (response_movies):
+        result = re.findall(SEARCH_RESULT_REGEX, response_movies[0])
+            
+        result_fixed = []
+        for row in result:
+            result_fixed.append((BASE_URL.format(row[0]), row[1], row[2]))
         
-    result_fixed = []
-    for row in result:
-        result_fixed.append((BASE_URL.format(row[0]), row[1], row[2]))
-    
-    return result_fixed
-
+        return result_fixed
+    else:
+        xbmc.log('\n\nCSFD.cz --- POZOR - Nenalezen zadny vysledek pri hledani "{0}"\n\n'.format(query), xbmc.LOGWARNING)
 
 def get_movie(url, settings):
     #xbmc.log(' using movie from url %s to get movie details' % url, xbmc.LOGDEBUG)
