@@ -103,10 +103,10 @@ IMDB_RATING_REGEX = re.compile(r'AggregateRating\".*?ratingValue\":(.*?)}')
 IMDB_VOTES_REGEX = re.compile(r'AggregateRating\".*?ratingCount\":(.*?),')
 
 HTML_STRIP = re.compile('<.*?>')
+UNICODE_PATTERN = re.compile(u'[^\u0000-\uD7FF\uE000-\uFFFF]', re.UNICODE)
 
 def normalize_name(name):
-    re_pattern = re.compile(u'[^\u0000-\uD7FF\uE000-\uFFFF]', re.UNICODE)
-    name = re_pattern.sub(u'\uFFFD', name)    
+    name = UNICODE_PATTERN.sub(u'\uFFFD', name)  
     name = unicodedata.normalize('NFKD', name)
     output = ''
     for c in name:
