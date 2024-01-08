@@ -75,8 +75,7 @@ CSFD_CAST1_REGEX = re.compile(r'<h4>Hraj.:</h4>(.*)</span>', re.DOTALL)
 CSFD_CAST2_REGEX = re.compile(r'<a href="/tvurc[^>]*>([^<]*)</a>')
 CSFD_CAST_LIMIT = 8
 CSFD_YEAR_REGEX = re.compile(r'"dateCreated":"(\d*)')
-CSFD_GENRES_REGEX = re.compile(r'<div class="genres">(<.*>)</div>') # vsechny zanry
-CSFD_GENRE_REGEX = re.compile(r'<a[^>]*>([^>]*)</a>')  # hyperlinky v zanrech
+CSFD_GENRES_REGEX = re.compile(r'<div class="genres">(<.*)</div>')
 CSFD_COUNTRY_REGEX = re.compile(r'<div class="origin">([^,]*),')
 CSFD_TITLE_URL_REGEX = re.compile(r'\/film\/([^\/]*)\/galerie')
 CSFD_FANART_REGEX = re.compile(r'srcset=.*\/photos\/([^ ]*\....)')
@@ -103,7 +102,8 @@ IMDB_LDJSON_REGEX = re.compile(r'<script type="application/ld\+json">(.*?)</scri
 IMDB_RATING_REGEX = re.compile(r'AggregateRating\".*?ratingValue\":(.*?)}')
 IMDB_VOTES_REGEX = re.compile(r'AggregateRating\".*?ratingCount\":(.*?),')
 
-HTML_STRIP = re.compile('<.*?>')
+#HTML_STRIP = re.compile('<.*?>')
+HTML_STRIP = re.compile('<[^>]*>')
 UNICODE_PATTERN = re.compile(u'[^\u0000-\uD7FF\uE000-\uFFFF]', re.UNICODE)
 
 def normalize_name(name):
@@ -346,12 +346,9 @@ def get_movie(url, settings):
     
     match = CSFD_GENRES_REGEX.findall(response)
     if (match):
-        match2 = CSFD_GENRE_REGEX.findall(match[0])
-        if (match2):
-            if len(match2) > 1:
-                info['genre'] = ' / '.join(match2)
-            else: info['genre'] = match2[0]
-        else: xbmc.log('{0} - Nemame CSFD Genre'.format(url), xbmc.LOGWARNING)
+        match[0] = re.sub(HTML_STRIP, '', match[0])
+        info['genre'] = match[0].split(" / ")
+
     else: xbmc.log('{0} - Nemame CSFD Genres'.format(url), xbmc.LOGWARNING)
 
     
