@@ -75,7 +75,8 @@ CSFD_CAST1_REGEX = re.compile(r'<h4>Hraj.:</h4>(.*)</span>', re.DOTALL)
 CSFD_CAST2_REGEX = re.compile(r'<a href="/tvurc[^>]*>([^<]*)</a>')
 CSFD_CAST_LIMIT = 8
 CSFD_YEAR_REGEX = re.compile(r'"dateCreated":"(\d*)')
-CSFD_GENRES_REGEX = re.compile(r'<div class="genres">(<.*)</div>')
+#CSFD_GENRES_REGEX = re.compile(r'<div class="genres">(<.*)</div>')
+CSFD_GENRES_REGEX = re.compile(r'<div class="genres">(.*)</div>')
 CSFD_COUNTRY_REGEX = re.compile(r'<div class="origin">([^,]*),')
 CSFD_TITLE_URL_REGEX = re.compile(r'\/film\/([^\/]*)\/galerie')
 CSFD_FANART_REGEX = re.compile(r'srcset=.*\/photos\/([^ ]*\....)')
@@ -119,7 +120,7 @@ def normalize_name(name):
 def html_strip(input):
     temp = normalize_name(input) # Emoticons etc. in utf8bm4 - problematic for some DB when storing 
     try:
-        xbmc.log('\n\n\n b {}\n\n\n'.format(temp), xbmc.LOGDEBUG)
+        xbmc.log('\n\n\n HTML_Stripping {}\n\n\n'.format(temp), xbmc.LOGDEBUG)
     except:
         return '-'
 
@@ -345,6 +346,7 @@ def get_movie(url, settings):
     else: xbmc.log('{0} - Nemame CSFD Rok'.format(url), xbmc.LOGWARNING)
     
     match = CSFD_GENRES_REGEX.findall(response)
+    xbmc.log('GENRES {0} - RESPONSE'.format(response.encode('utf-8')), xbmc.LOGWARNING)
     if (match):
         match[0] = re.sub(HTML_STRIP, '', match[0])
         info['genre'] = match[0].split(" / ")
